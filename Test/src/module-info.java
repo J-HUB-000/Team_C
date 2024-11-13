@@ -6,4 +6,5 @@
  */
 module Test {
 	//HI!
+	//HELLO
 }

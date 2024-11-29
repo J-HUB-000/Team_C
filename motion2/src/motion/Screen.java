@@ -14,12 +14,16 @@ public class Screen extends Canvas implements ComponentListener {
 	private Graphics bg;
 	private Image offScreen;
 	private Dimension dim;
-	private Character ryu = new Character();
+	private Character soldier = new Character();
+	private Character_2 shotgun = new Character_2();
+	private Character_3 batman = new Character_3();
 	private int countNumber = 0;
 	
 	public Screen() {
 		addComponentListener(this);
-		addKeyListener(ryu);
+		addKeyListener(soldier);
+		addKeyListener(shotgun);
+		addKeyListener(batman);
 		setFocusable(true);
 		Timer timer = new Timer();
 		timer.schedule(new TimerTask() {
@@ -49,7 +53,11 @@ public class Screen extends Canvas implements ComponentListener {
 	public void paint(Graphics g) {
 		bg.clearRect(0, 0, dim.width, dim.height);
 		//~~~~
-		ryu.draw(bg, this);
+		
+		
+		soldier.draw(bg, this);
+		shotgun.draw(bg, this);
+		batman.draw(bg, this);
 		g.drawImage(offScreen, 0, 0, this);
 	}
 	

@@ -38,7 +38,7 @@ public class Character {
         loadImage();
         initStates();
     }
-//
+
     private void loadImage() {
         try {
             this.sprite = ImageIO.read(new File("res/soldier.png"));

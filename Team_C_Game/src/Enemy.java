@@ -1,5 +1,5 @@
 class Enemy {
-    int x, y, size, health = 2;
+    int x, y, size, health = 1;
 
     public Enemy(int x, int y, int size) {
         this.x = x;

@@ -1,3 +1,4 @@
+
 import javax.swing.JFrame;
 
 public class MainFrame extends JFrame{
@@ -9,7 +10,7 @@ public class MainFrame extends JFrame{
         setResizable(false);
 
         // Screen 패널 추가
-        Screen screen = new Screen(this);
+        Title screen = new Title(this);
         add(screen);
 
         setVisible(true);

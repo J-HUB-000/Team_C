@@ -1,3 +1,4 @@
+
 class Projectile {
     int x, y, size = 10, speed;
 

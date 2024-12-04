@@ -25,6 +25,7 @@ class Title extends JPanel {
     private String selectedCharacter;
     private Color characterColor; // 캐릭터 색상 저장
     private Screen screen;
+    private static int characterValue;
 
     public Title(JFrame parentFrame) {
         this.parentFrame = parentFrame;
@@ -54,6 +55,7 @@ class Title extends JPanel {
         bottomPanel.add(playButton);
         add(bottomPanel, BorderLayout.SOUTH);
     }
+    
 
     private JPanel createCharacterPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
@@ -73,6 +75,7 @@ class Title extends JPanel {
             button.addActionListener(e -> {
                 selectedCharacter = characterName;
                 characterColor = color; // 선택한 캐릭터의 색상 저장
+                setCharacterValue(characterColor);
                 playButton.setVisible(true);
             });
 
@@ -80,4 +83,19 @@ class Title extends JPanel {
         }
         return panel;
     }
+    
+    private void setCharacterValue(Color color) {
+		if (color.equals(Color.GREEN)) {
+            characterValue = 1;
+        } else if (color.equals(Color.BLUE)) {
+            characterValue = 2;
+        } else if (color.equals(Color.YELLOW)) {
+            characterValue = 3;
+        }
+    }
+
+    public static int getCharacterValue() {
+        return characterValue;
+    }
+   
 }

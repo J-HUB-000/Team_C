@@ -27,28 +27,51 @@ import javax.imageio.ImageIO;
 public class Character {
     private BufferedImage sprite;
     private int x = 310, y = 350;
-    private final int width = 50, height = 50; // 캐릭터 크기
     private final int groundY = 350;
     private int velocityY = 0;
     private boolean jumping = false, movingLeft = false, movingRight = false, flip = false;
     static int stateIndex = 0; // 상태 관리 변수
     private State[] states;
-
+    
     public Character() {
-        loadImage();
-        initStates();
+    	loadImage(getSelectCharacter());
+    }
+    
+    public int getSelectCharacter () {
+    	return Title.getCharacterValue();
     }
 
-    private void loadImage() {
-        try {
-            this.sprite = ImageIO.read(new File("res/soldier.png"));
-            this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void loadImage(int selectCharacter) {
+    	if(selectCharacter == 1) {
+    		try {
+    			this.sprite = ImageIO.read(new File("res/soldier.png"));
+    			this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
+    			soldier();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+    	}
+    	else if (selectCharacter == 2) {
+    		try {
+    			this.sprite = ImageIO.read(new File("res/people.png"));
+    			this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
+    			shutgunMan();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+    	}
+    	else {
+    		try {
+    			this.sprite = ImageIO.read(new File("res/batman.png"));
+    			this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
+    			batMan();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+    	}
     }
 
-    private void initStates() {
+    private void soldier() {
         states = new State[6];
 
         State state = new State();
@@ -100,6 +123,159 @@ public class Character {
         state.frame_size = 4;
     }
 
+    private void shutgunMan() {
+		states = new State[8];
+		State state = new State();
+		states[0] = state;//아무것도 안할때 숨쉬기 모션
+		state.width = 128;//잘라낼 크기 x
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;//어디서부터 잘라내기 시작할지
+		state.start_y = 768;
+		state.frame_size = 6;//프레임 수
+		
+		state = new State();
+		states[1] = state;//달리기 모션
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 0;
+		state.frame_size = 8;
+		state.stop = true;
+		
+		state = new State();
+		states[2] = state;//달리기 모션
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 0;
+		state.frame_size = 8;
+		
+		state = new State();
+		states[3] = state;//근접공격
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 256;
+		state.frame_size = 6;
+		
+		state = new State();
+		states[4] = state;//샷건
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 128;
+		state.frame_size = 12;
+		
+		state = new State();
+		states[5] = state;//점프
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 896;
+		state.frame_size = 11;
+		
+		state = new State();
+		states[6] = state;//죽음
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 512;
+		state.frame_size = 4;
+		
+		
+		state.stop = true;	
+	}
+  
+    private void batMan() {
+		states = new State[8];
+		State state = new State();
+		states[0] = state;//아무것도 안할때 숨쉬기 모션
+		state.width = 128;//잘라낼 크기 x
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;//어디서부터 잘라내기 시작할지
+		state.start_y = 0;
+		state.frame_size = 5;//프레임 수
+		
+		state = new State();
+		states[1] = state;//달리기 모션
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 128;
+		state.frame_size = 8;
+		state.stop = true;
+		
+		state = new State();
+		states[2] = state;//달리기 모션
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 128;
+		state.frame_size = 8;
+		
+		state = new State();
+		states[3] = state;//근접공격1
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 256;
+		state.frame_size = 10;
+		
+		state = new State();
+		states[4] = state;//근접공격2
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 384;
+		state.frame_size = 4;
+		
+		state = new State();
+		states[5] = state;//점프
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 640;
+		state.frame_size = 8;
+		
+		state = new State();
+		states[6] = state;//죽음
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 512;
+		state.frame_size = 4;
+		
+		
+		state.stop = true;
+    }
     private BufferedImage transformColorToTransparency(BufferedImage image, Color color) {
         final int r1 = color.getRed();
         final int g1 = color.getGreen();
@@ -173,7 +349,7 @@ public class Character {
 	public void update() {
         if (jumping) {
             y += velocityY;
-            velocityY += 2;
+            velocityY += 1;
             if (y >= groundY) {
                 y = groundY;
                 jumping = false;
@@ -185,31 +361,31 @@ public class Character {
     
     public void actionPressed(int keyCode) {
     	switch (keyCode) {
+    	case KeyEvent.VK_A:
+    		stateIndex = 3; // 근접 공격
+    		break;
+    	case KeyEvent.VK_S:
+    		stateIndex = 4; // 사격
+    		break;
+    	case KeyEvent.VK_D:
+    		stateIndex = 5; // 죽음
+    		break;
     	case KeyEvent.VK_LEFT:
-            movingLeft = true;
-            flip = true;
-            stateIndex = 1;
-            break;
-        case KeyEvent.VK_RIGHT:
-            movingRight = true;
-            flip = false;
-            stateIndex = 2;
-            break;
-        case KeyEvent.VK_UP:
-            if (!jumping) {
-                jumping = true;
-                velocityY = -15;
-            }
-            break;
-        case KeyEvent.VK_A:
-            stateIndex = 3; // 근접 공격
-            break;
-        case KeyEvent.VK_S:
-            stateIndex = 4; // 사격
-            break;
-        case KeyEvent.VK_D:
-            stateIndex = 5; // 죽음
-            break;
+    		movingLeft = true;
+    		flip = true;
+    		stateIndex = 1;
+    		break;
+    	case KeyEvent.VK_RIGHT:
+    		movingRight = true;
+    		flip = false;
+    		stateIndex = 2;
+    		break;
+    	case KeyEvent.VK_UP:
+    		if (!jumping) {
+    			jumping = true;
+    			velocityY = -15;
+    		}
+    		break;
     	}
     }
     
@@ -230,7 +406,6 @@ public class Character {
                 stateIndex = 0;
                 break;
             case KeyEvent.VK_D:
-                stateIndex = 0;
                 break;
         }
     }

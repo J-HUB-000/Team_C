@@ -6,7 +6,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -25,12 +27,17 @@ class Screen extends JPanel implements KeyListener {
     // 움직임, 적 생성, 무적 상태 관리를 위한 타이머
     private final JFrame parentFrame;
     private final Color characterColor; // 캐릭터의 색상
+    private final Map<Integer, Boolean> keyStates = new HashMap<>(); // 키 상태를 추적
+    private final Map<Integer, Timer> actionTimers = new HashMap<>(); // 키에 대응하는 타이머
     private final ArrayList<Enemy> enemies = new ArrayList<>(); // 적 목록
     private final ArrayList<Projectile> projectiles = new ArrayList<>(); // 투사체 목록
     private final Random random = new Random(); // 랜덤 생성기
     private int lastDirection = 1; // 마지막으로 움직인 방향 (1: 오른쪽, -1: 왼쪽)
     private Character character = new Character(); // 캐릭터 객체
     private int countNumber = 0; // 프레임 카운터
+    private int delay, select = 0; 
+    private boolean meleeAttackCooldown = false; // A키 공격 쿨타임 상태
+    private boolean projectileAttackCooldown = false; // S키 공격 쿨타임 상태
     
     // 생성자: 화면 초기화 및 타이머 설정
     public Screen(JFrame parentFrame, Color characterColor) {
@@ -42,18 +49,19 @@ class Screen extends JPanel implements KeyListener {
         addKeyListener(this); // 키 리스너 추가
 
         // 캐릭터 움직임을 처리하는 타이머
-        movementTimer = new Timer(15, e -> {
+        movementTimer = new Timer(20, e -> {
             if (jumping) { // 점프 로직
                 y += velocityY;
-                velocityY += 2; // 중력 효과
+                velocityY += 1; // 중력 효과
                 if (y >= groundY) { // 바닥에 도달했을 때 상태 초기화
                     y = groundY;
                     jumping = false;
                 }
             }
-            if (movingLeft) x = Math.max(x - 5, 0); // 왼쪽으로 이동
-            if (movingRight) x = Math.min(x + 5, getWidth() - 50); // 오른쪽으로 이동
-
+            
+        	if (movingLeft) x = Math.max(x - 5, 0); // 왼쪽으로 이동
+        	if (movingRight) x = Math.min(x + 5, getWidth() - 50); // 오른쪽으로 이동
+        	
             character.update(); // 캐릭터 상태 업데이트
             moveEnemies(); // 적 이동 처리
             moveProjectiles(); // 투사체 이동 처리
@@ -61,7 +69,6 @@ class Screen extends JPanel implements KeyListener {
 
             repaint(); // 화면 갱신
         });
-
         // 적 생성 타이머
         enemySpawnTimer = new Timer(300 + random.nextInt(500), e -> spawnEnemy());
         // 무적 상태 해제 타이머
@@ -133,8 +140,11 @@ class Screen extends JPanel implements KeyListener {
 
     // 근접 공격 처리
     private void performMeleeAttack() {
+    	if (meleeAttackCooldown) return; // 쿨타임 중이면 무시
+        meleeAttackCooldown = true; // 쿨타임 활성화
+        
         int attackX = (lastDirection == 1) ? x + 50 : x - 50; // 공격 방향에 따른 x 좌표
-        int attackWidth = 40; // 공격 범위
+        int attackWidth = 25; // 공격 범위
         Rectangle attackArea = new Rectangle(attackX, y, attackWidth, 50);
 
         Iterator<Enemy> iterator = enemies.iterator();
@@ -146,6 +156,10 @@ class Screen extends JPanel implements KeyListener {
                 if (enemy.health <= 0) iterator.remove(); // 체력이 0 이하인 적 제거
             }
         }
+        // 일정 시간 후 쿨타임 해제
+        Timer cooldownTimer = new Timer(300, e -> meleeAttackCooldown = false); // 300ms 쿨타임
+        cooldownTimer.setRepeats(false);
+        cooldownTimer.start();
     }
 
     // 화면을 그리는 메소드
@@ -159,14 +173,6 @@ class Screen extends JPanel implements KeyListener {
         g.setColor(Color.GREEN);
         g.fillRect(x, y - 10, health / 2, 10); // 체력바 표시
 
-        // 캐릭터
-        if(characterColor == Color.GREEN) {
-            character.draw(g, this); // 커스텀 캐릭터 그리기
-        } else {
-            g.setColor(characterColor);
-            g.fillRect(x, y, 50, 50); // 기본 사각형 캐릭터
-        }
-
         // 적
         g.setColor(Color.RED);
         for (Enemy enemy : enemies) g.fillRect(enemy.x, enemy.y, enemy.size - 10, enemy.size + 50);
@@ -175,6 +181,9 @@ class Screen extends JPanel implements KeyListener {
         g.setColor(Color.ORANGE);
         for (Projectile projectile : projectiles)
             g.fillRect(projectile.x, projectile.y, projectile.size, projectile.size);
+        
+        // 캐릭터
+        character.draw(g, this); // 커스텀 캐릭터 그리기
     }
     
     public void characterMove(int keyCode) {
@@ -205,14 +214,35 @@ class Screen extends JPanel implements KeyListener {
         int key = e.getKeyCode();
         character.actionPressed(key); // 캐릭터 상태 변경
         characterMove(key); // 움직임 처리
-        if (key == KeyEvent.VK_A) performMeleeAttack(); // 근접 공격
-        if (key == KeyEvent.VK_S) fireProjectile(); // 투사체 발사
+        if (key == KeyEvent.VK_A) {
+        	startActionWithDelay(key, this::performMeleeAttack, 300); // 근접 공격 후 300ms 딜레이
+        }
+        else if (key == KeyEvent.VK_S) {
+        	if(character.getSelectCharacter() == 1) {
+            	startActionWithDelay(key, this::fireProjectile, 200); // 투사체 발사 후 100ms 딜레이
+            	coolTime(200);
+        	}
+        	else if(character.getSelectCharacter() == 2) {
+        		startActionWithDelay(key, this::fireProjectile, 400);
+        		coolTime(400);
+        	}
+        	else {
+        		startActionWithDelay(key, this::fireProjectile, 200);
+            	coolTime(200);
+        	}
+        }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
         int key = e.getKeyCode();
         character.actionReleased(key); // 캐릭터 상태 해제
+        keyStates.put(key, false); // 키 상태 초기화
+
+        // 해당 키의 타이머 중지
+        Timer timer = actionTimers.remove(key);
+        if (timer != null) timer.stop();
+        
         if (key == KeyEvent.VK_LEFT) movingLeft = false; // 왼쪽 이동 해제
         if (key == KeyEvent.VK_RIGHT) movingRight = false; // 오른쪽 이동 해제
     }
@@ -221,10 +251,36 @@ class Screen extends JPanel implements KeyListener {
     public void keyTyped(KeyEvent e) {
         // 사용하지 않음
     }
+
+    // 딜레이를 두고 동작을 반복 실행
+    private void startActionWithDelay(int keyCode, Runnable action, int delay) {
+        if (keyStates.getOrDefault(keyCode, false)) return; // 이미 동작 중이면 무시
+        keyStates.put(keyCode, true);
+
+        // 한 번 실행
+        action.run();
+
+        // 딜레이 이후 반복 실행
+        Timer timer = new Timer(delay, e -> {
+            if (keyStates.getOrDefault(keyCode, false)) action.run();
+        });
+        timer.start();
+        actionTimers.put(keyCode, timer);
+    }
     
     // 투사체 발사 처리
     private void fireProjectile() {
+    	if (projectileAttackCooldown) return; // 쿨타임 중이면 무시
+        projectileAttackCooldown = true; // 쿨타임 활성화
+        
         int speed = lastDirection * 10; // 방향에 따른 투사체 속도
         projectiles.add(new Projectile(x + 25, y + 25, speed)); // 투사체 추가
+    }
+
+	// 일정 시간 후 쿨타임 해제
+    private void coolTime(int delay) {
+            Timer cooldownTimer = new Timer(delay, e -> projectileAttackCooldown = false); // 400ms 쿨타임
+            cooldownTimer.setRepeats(false);
+            cooldownTimer.start();
     }
 }

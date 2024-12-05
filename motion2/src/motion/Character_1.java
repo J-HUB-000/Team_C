@@ -18,17 +18,17 @@ import java.security.KeyStore.PrivateKeyEntry;
 
 import javax.imageio.ImageIO;
 
-public class Character_3 implements KeyListener {
+public class Character_1 implements KeyListener {
 	private BufferedImage sprite;
-	private int x = 250; //처음 캐릭터 그릴 위치 x좌표
+	private int x = 50; //처음 캐릭터 그릴 위치 x좌표
 	private int y = 400;
 	private State [] states;
 	private int stateIndex = 0;
 	private boolean flip = false;  // 왼쪽, 오른쪽 반전 상태를 관리하는 변수
 	
-	public Character_3() {
+	public Character_1() {
 		loadImage();
-		states = new State[8];
+		states = new State[6];
 		State state = new State();
 		states[0] = state;//아무것도 안할때 숨쉬기 모션
 		state.width = 128;//잘라낼 크기 x
@@ -36,62 +36,42 @@ public class Character_3 implements KeyListener {
 		state.index_x = 0;
 		state.index_y = 0;
 		state.start_x = 0;//어디서부터 잘라내기 시작할지
-		state.start_y = 0;
-		state.frame_size = 5;//프레임 수
+		state.start_y = 640;
+		state.frame_size = 6;//프레임 수
 		
 		state = new State();
-		states[1] = state;//달리기 모션
-		state.width = 128;
-		state.height = 128;
-		state.index_x = 0;
-		state.index_y = 0;
-		state.start_x = 0;
-		state.start_y = 128;
-		state.frame_size = 8;
-		state.stop = true;
-		
-		state = new State();
-		states[2] = state;//달리기 모션
-		state.width = 128;
-		state.height = 128;
-		state.index_x = 0;
-		state.index_y = 0;
-		state.start_x = 0;
-		state.start_y = 128;
-		state.frame_size = 8;
-		
-		state = new State();
-		states[3] = state;//근접공격1
-		state.width = 128;
-		state.height = 128;
-		state.index_x = 0;
-		state.index_y = 0;
-		state.start_x = 0;
-		state.start_y = 256;
-		state.frame_size = 10;
-		
-		state = new State();
-		states[4] = state;//근접공격2
+		states[1] = state;//왼쪽으로 가기 
 		state.width = 128;
 		state.height = 128;
 		state.index_x = 0;
 		state.index_y = 0;
 		state.start_x = 0;
 		state.start_y = 384;
-		state.frame_size = 4;
+		state.frame_size = 8;
+		state.stop = true;
 		
 		state = new State();
-		states[5] = state;//점프
+		states[2] = state;//오른쪽으로 가기
 		state.width = 128;
 		state.height = 128;
 		state.index_x = 0;
 		state.index_y = 0;
 		state.start_x = 0;
-		state.start_y = 640;
+		state.start_y = 384;
 		state.frame_size = 8;
 		
 		state = new State();
-		states[6] = state;//죽음
+		states[3] = state;//근접공격
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 0;
+		state.frame_size = 3;
+		
+		state = new State();
+		states[4] = state;//사격
 		state.width = 128;
 		state.height = 128;
 		state.index_x = 0;
@@ -100,10 +80,18 @@ public class Character_3 implements KeyListener {
 		state.start_y = 512;
 		state.frame_size = 4;
 		
+		state = new State();
+		states[5] = state;//죽음
+		state.width = 128;
+		state.height = 128;
+		state.index_x = 0;
+		state.index_y = 0;
+		state.start_x = 0;
+		state.start_y = 128;
+		state.frame_size = 4;
 		
 		state.stop = true;	
 	}
-	
 	
 	private State getState() {
 		return states[stateIndex];
@@ -111,7 +99,7 @@ public class Character_3 implements KeyListener {
 	
 	private void loadImage() {
 		try {
-			this.sprite = ImageIO.read(new File("res/batman.png"));
+			this.sprite = ImageIO.read(new File("res/soldier.png"));
 			this.sprite = TransformColorToTransparency(sprite, new Color(255, 255, 255));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -207,20 +195,16 @@ public class Character_3 implements KeyListener {
                 flip = false;  // 오른쪽 방향으로 복원
                 break;
             case KeyEvent.VK_A:
-                this.stateIndex = 3;  // 근접공격(공격1)
+                this.stateIndex = 3;  // 근접 공격
                 states[3].stop = false;
                 break;
             case KeyEvent.VK_S:
-                this.stateIndex = 4;  //사격(공격2)
+                this.stateIndex = 4;  // 사격
                 states[4].stop = false;
                 break;
-            case KeyEvent.VK_SPACE:
-                this.stateIndex = 5;  // 점프
-                states[5].stop = false;
-                break;
             case KeyEvent.VK_D:
-                this.stateIndex = 6;  // 죽음
-                states[6].stop = false;
+                this.stateIndex = 5;  // 죽음
+                states[5].stop = false;
                 break;
         }
     }
@@ -234,7 +218,6 @@ public class Character_3 implements KeyListener {
 	    states[3].stop = true;// 오른쪽 애니메이션 끝났을 때 멈추기
 	    states[4].stop = true;
 	    states[5].stop = true;
-	    states[6].stop = true;
 	}
 
 }

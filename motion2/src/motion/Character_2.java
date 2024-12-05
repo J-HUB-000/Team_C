@@ -20,7 +20,7 @@ import javax.imageio.ImageIO;
 
 public class Character_2 implements KeyListener {
 	private BufferedImage sprite;
-	private int x = 200; //처음 캐릭터 그릴 위치 x좌표
+	private int x = 150; //처음 캐릭터 그릴 위치 x좌표
 	private int y = 400;
 	private State [] states;
 	private int stateIndex = 0;

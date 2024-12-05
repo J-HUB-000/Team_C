@@ -14,9 +14,12 @@ public class Screen extends Canvas implements ComponentListener {
 	private Graphics bg;
 	private Image offScreen;
 	private Dimension dim;
-	private Character soldier = new Character();
+	private Character_1 soldier = new Character_1();
 	private Character_2 shotgun = new Character_2();
 	private Character_3 batman = new Character_3();
+	private zombie_1 normalzombie = new zombie_1();
+	private zombie_2 speedzombie = new zombie_2();
+	private zombie_3 girlzombie = new zombie_3();
 	private int countNumber = 0;
 	
 	public Screen() {
@@ -24,6 +27,9 @@ public class Screen extends Canvas implements ComponentListener {
 		addKeyListener(soldier);
 		addKeyListener(shotgun);
 		addKeyListener(batman);
+		addKeyListener(normalzombie);
+		addKeyListener(speedzombie);
+		addKeyListener(girlzombie);
 		setFocusable(true);
 		Timer timer = new Timer();
 		timer.schedule(new TimerTask() {
@@ -58,6 +64,9 @@ public class Screen extends Canvas implements ComponentListener {
 		soldier.draw(bg, this);
 		shotgun.draw(bg, this);
 		batman.draw(bg, this);
+		normalzombie.draw(bg, this);
+		speedzombie.draw(bg, this);
+		girlzombie.draw(bg, this);
 		g.drawImage(offScreen, 0, 0, this);
 	}
 	

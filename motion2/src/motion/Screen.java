@@ -58,7 +58,7 @@ public class Screen extends Canvas implements ComponentListener {
 	@Override
 	public void paint(Graphics g) {
 		bg.clearRect(0, 0, dim.width, dim.height);
-		//~~~~
+		//~~~~~
 		
 		
 		soldier.draw(bg, this);

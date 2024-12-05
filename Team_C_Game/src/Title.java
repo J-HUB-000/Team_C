@@ -23,7 +23,7 @@ class Title extends JPanel {
     private final JFrame parentFrame;
     private JButton playButton;
     private String selectedCharacter;
-    private Color characterColor; // 캐릭터 색상 저장
+    private Color characterColor; // 캐릭터 색상 저장 
     private Screen screen;
     private static int characterValue;
 

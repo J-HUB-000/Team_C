@@ -121,10 +121,12 @@ public class Character {
         state.start_x = 0;
         state.start_y = 128;
         state.frame_size = 4;
+        
+        state.stop = true;	
     }
 
     private void shutgunMan() {
-		states = new State[8];
+		states = new State[6];
 		State state = new State();
 		states[0] = state;//아무것도 안할때 숨쉬기 모션
 		state.width = 128;//잘라낼 크기 x
@@ -144,7 +146,6 @@ public class Character {
 		state.start_x = 0;
 		state.start_y = 0;
 		state.frame_size = 8;
-		state.stop = true;
 		
 		state = new State();
 		states[2] = state;//달리기 모션
@@ -176,18 +177,9 @@ public class Character {
 		state.start_y = 128;
 		state.frame_size = 12;
 		
-		state = new State();
-		states[5] = state;//점프
-		state.width = 128;
-		state.height = 128;
-		state.index_x = 0;
-		state.index_y = 0;
-		state.start_x = 0;
-		state.start_y = 896;
-		state.frame_size = 11;
 		
 		state = new State();
-		states[6] = state;//죽음
+		states[5] = state;//죽음
 		state.width = 128;
 		state.height = 128;
 		state.index_x = 0;
@@ -201,7 +193,7 @@ public class Character {
 	}
   
     private void batMan() {
-		states = new State[8];
+		states = new State[6];
 		State state = new State();
 		states[0] = state;//아무것도 안할때 숨쉬기 모션
 		state.width = 128;//잘라낼 크기 x
@@ -221,7 +213,6 @@ public class Character {
 		state.start_x = 0;
 		state.start_y = 128;
 		state.frame_size = 8;
-		state.stop = true;
 		
 		state = new State();
 		states[2] = state;//달리기 모션
@@ -254,17 +245,7 @@ public class Character {
 		state.frame_size = 4;
 		
 		state = new State();
-		states[5] = state;//점프
-		state.width = 128;
-		state.height = 128;
-		state.index_x = 0;
-		state.index_y = 0;
-		state.start_x = 0;
-		state.start_y = 640;
-		state.frame_size = 8;
-		
-		state = new State();
-		states[6] = state;//죽음
+		states[5] = state;//죽음
 		state.width = 128;
 		state.height = 128;
 		state.index_x = 0;

@@ -218,17 +218,16 @@ class Screen extends JPanel implements KeyListener {
         	startActionWithDelay(key, this::performMeleeAttack, 300); // 근접 공격 후 300ms 딜레이
         }
         else if (key == KeyEvent.VK_S) {
-        	if(character.getSelectCharacter() == 1) {
+        	if(character.getSelectCharacter() == 1) {//단발 사격 군인
             	startActionWithDelay(key, this::fireProjectile, 200); // 투사체 발사 후 100ms 딜레이
             	coolTime(200);
         	}
-        	else if(character.getSelectCharacter() == 2) {
-        		startActionWithDelay(key, this::fireProjectile, 400);
-        		coolTime(400);
-        	}
-        	else {
+        	else if(character.getSelectCharacter() == 2) {//샷건 캐릭터 3발 씩 쏨
         		startActionWithDelay(key, this::fireProjectile, 200);
             	coolTime(200);
+        	}
+        	else {//막대기 캐릭터
+        		startActionWithDelay(key, this::performMeleeAttack, 300); // 근접 공격 후 300ms 딜레이
         	}
         }
     }
@@ -268,14 +267,31 @@ class Screen extends JPanel implements KeyListener {
         actionTimers.put(keyCode, timer);
     }
     
-    // 투사체 발사 처리
+ // 투사체 발사 처리
     private void fireProjectile() {
-    	if (projectileAttackCooldown) return; // 쿨타임 중이면 무시
+        if (projectileAttackCooldown) return; // 쿨타임 중이면 무시
         projectileAttackCooldown = true; // 쿨타임 활성화
-        
+
         int speed = lastDirection * 10; // 방향에 따른 투사체 속도
-        projectiles.add(new Projectile(x + 25, y + 25, speed)); // 투사체 추가
+        
+        if (character.getSelectCharacter() == 2) {
+            // 캐릭터 2가 선택된 경우 3발의 총알을 동시에 발사
+            projectiles.add(new Projectile(x + 25, y + 25, speed)); // 첫 번째 총알
+            projectiles.add(new Projectile(x + 25, y + 25, speed + 2)); // 두 번째 총알 (약간 더 빠르게)
+            projectiles.add(new Projectile(x + 25, y + 25, speed - 2)); // 세 번째 총알 (약간 더 느리게)
+        }
+        else if (character.getSelectCharacter() == 3) {
+            
+        }
+        else {
+            // 기본적으로 한 발만 발사
+            projectiles.add(new Projectile(x + 25, y + 25, speed));
+        }
+
+        // 일정 시간 후 쿨타임 해제
+        coolTime(200);
     }
+
 
 	// 일정 시간 후 쿨타임 해제
     private void coolTime(int delay) {

@@ -34,6 +34,7 @@ class Screen extends JPanel implements KeyListener {
     private final Random random = new Random(); // 랜덤 생성기
     private int lastDirection = 1; // 마지막으로 움직인 방향 (1: 오른쪽, -1: 왼쪽)
     private Character character = new Character(); // 캐릭터 객체
+    private Enemy enemy = new Enemy(310,350,40); // 캐릭터 객체
     private int countNumber = 0; // 프레임 카운터
     private int delay, select = 0; 
     private boolean meleeAttackCooldown = false; // A키 공격 쿨타임 상태
@@ -63,6 +64,7 @@ class Screen extends JPanel implements KeyListener {
         	if (movingRight) x = Math.min(x + 5, getWidth() - 50); // 오른쪽으로 이동
         	
             character.update(); // 캐릭터 상태 업데이트
+            enemy.updateAnimation();
             moveEnemies(); // 적 이동 처리
             moveProjectiles(); // 투사체 이동 처리
             checkCollisions(); // 충돌 검사
@@ -70,7 +72,7 @@ class Screen extends JPanel implements KeyListener {
             repaint(); // 화면 갱신
         });
         // 적 생성 타이머
-        enemySpawnTimer = new Timer(300 + random.nextInt(500), e -> spawnEnemy());
+        enemySpawnTimer = new Timer(600 + random.nextInt(1000), e -> spawnEnemy());
         // 무적 상태 해제 타이머
         invincibilityTimer = new Timer(500, e -> invincible = false);
 
@@ -82,7 +84,7 @@ class Screen extends JPanel implements KeyListener {
     private void spawnEnemy() {
         int side = random.nextInt(2); // 적이 생성될 방향 (왼쪽: 0, 오른쪽: 1)
         int enemyX = (side == 0) ? 0 : getWidth() - 30; // 적의 초기 x 위치
-        enemies.add(new Enemy(enemyX, groundY, 30)); // 적 추가
+        enemies.add(new Enemy(enemyX, groundY, 10)); // 적 추가
     }
 
     // 적 이동 처리
@@ -90,9 +92,20 @@ class Screen extends JPanel implements KeyListener {
         Iterator<Enemy> iterator = enemies.iterator();
         while (iterator.hasNext()) {
             Enemy enemy = iterator.next();
-            if (enemy.x < x) enemy.x += 1; // 캐릭터 방향으로 이동
-            else if (enemy.x > x) enemy.x -= 1;
-
+            if (enemy.x < x) { 
+            	enemy.x += 1; // 캐릭터 방향으로 이동
+            	enemy.facingLeft = false; // 캐릭터 방향에 따라 좀비 좌우 변경
+            }
+            else if (enemy.x > x) {
+            	enemy.x -= 1;
+            	enemy.facingLeft = true;
+            }
+            
+            // 애니메이션 업데이트
+            if (countNumber % 20 == 0) {
+                enemy.updateAnimation();
+            }
+            
             if (enemy.health <= 0) iterator.remove(); // 체력이 0 이하인 적 제거
         }
     }
@@ -166,17 +179,18 @@ class Screen extends JPanel implements KeyListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
+        
         // 캐릭터 체력바
         g.setColor(Color.RED);
         g.fillRect(x, y - 10, 50, 10); // 체력바 배경
         g.setColor(Color.GREEN);
         g.fillRect(x, y - 10, health / 2, 10); // 체력바 표시
-
+        
         // 적
-        g.setColor(Color.RED);
-        for (Enemy enemy : enemies) g.fillRect(enemy.x, enemy.y, enemy.size - 10, enemy.size + 50);
-
+        for (Enemy enemy : enemies) {
+            enemy.draw(g, this);
+        }
+        
         // 투사체
         g.setColor(Color.ORANGE);
         for (Projectile projectile : projectiles)

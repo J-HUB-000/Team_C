@@ -5,7 +5,6 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
@@ -13,16 +12,8 @@ import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageProducer;
 import java.io.File;
 import java.io.IOException;
-import java.security.KeyStore.PrivateKeyEntry;
 import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageFilter;
-import java.awt.image.RGBImageFilter;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
+
 
 public class Character {
     private BufferedImage sprite;
@@ -257,6 +248,8 @@ public class Character {
 		
 		state.stop = true;
     }
+    
+    
     private BufferedImage transformColorToTransparency(BufferedImage image, Color color) {
         final int r1 = color.getRed();
         final int g1 = color.getGreen();
@@ -315,7 +308,7 @@ public class Character {
         }
 
 	    
-	    if (screen.getCount() % 100 == 0) {
+	    if (screen.getCount() % 20 == 0) {
 	        if (state.index_x < state.frame_size - 1) {
 	            state.index_x++;
 	        } else {

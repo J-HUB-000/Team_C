@@ -14,7 +14,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 class Enemy {
-    int x = 310, y = 400;
+    int x = 310, y = 350;
     int size, health = 1;
     private BufferedImage sprite;
     private State[] states;

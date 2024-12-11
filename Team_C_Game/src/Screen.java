@@ -1,19 +1,31 @@
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 class Screen extends JPanel implements KeyListener {
@@ -39,16 +51,24 @@ class Screen extends JPanel implements KeyListener {
     private int delay, select = 0; 
     private boolean meleeAttackCooldown = false; // A키 공격 쿨타임 상태
     private boolean projectileAttackCooldown = false; // S키 공격 쿨타임 상태
+
+    private Image bgImage;
+    private Clip bgmClip;
+    private int score = 0; //점수
+    private int stage =1; // 현재 스테이
     
     // 생성자: 화면 초기화 및 타이머 설정
-    public Screen(JFrame parentFrame, Color characterColor) {
+    public Screen(JFrame parentFrame, Color characterColor, int stage) {
         this.parentFrame = parentFrame;
         this.characterColor = characterColor;
 
         setBackground(Color.WHITE); // 배경색 설정
         setFocusable(true); // 키 이벤트 활성화
         addKeyListener(this); // 키 리스너 추가
-
+        
+        // 초기화 메소드 호출
+        initialize();
+        
         // 캐릭터 움직임을 처리하는 타이머
         movementTimer = new Timer(20, e -> {
             if (jumping) { // 점프 로직
@@ -79,12 +99,37 @@ class Screen extends JPanel implements KeyListener {
         movementTimer.start(); // 타이머 시작
         enemySpawnTimer.start();
     }
+    
+    private void loadBackgroundImage() {
+        try {
+            String bgFile = (stage == 1) ? "res/bg1.jpg" : "res/bg2.jpg";
+            ImageIcon icon = new ImageIcon(bgFile);
+            bgImage = icon.getImage();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initialize() {
+        loadBackgroundImage();
+        playBackgroundMusic();
+    }
+    
+    private void playBackgroundMusic() {
+    	try {
+    		AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("res/bgm1.mp3"));
+    		bgmClip = AudioSystem.getClip(); bgmClip.open(audioInputStream);
+    		bgmClip.loop(Clip.LOOP_CONTINUOUSLY); // 반복 재생
+    	} catch (Exception e) {
+    			e.printStackTrace();
+    	}
+    }
 
     // 적 생성 로직
     private void spawnEnemy() {
         int side = random.nextInt(2); // 적이 생성될 방향 (왼쪽: 0, 오른쪽: 1)
-        int enemyX = (side == 0) ? 0 : getWidth() - 30; // 적의 초기 x 위치
-        enemies.add(new Enemy(enemyX, groundY, 10)); // 적 추가
+        int enemyX = (side == 0) ? 0 : getWidth(); // 적의 초기 x 위치
+        enemies.add(new Enemy(enemyX, groundY, 30)); // 적 추가
     }
 
     // 적 이동 처리
@@ -106,8 +151,63 @@ class Screen extends JPanel implements KeyListener {
                 enemy.updateAnimation();
             }
             
-            if (enemy.health <= 0) iterator.remove(); // 체력이 0 이하인 적 제거
+            if (enemy.health <= 0) {
+            	iterator.remove(); // 체력이 0 이하인 적 제거
+                score+=1; // 적을 죽일 때마다 점수 증가
+                checkStageClear(); // 스테이지 클리어 조건 확인
+            }
         }
+    }
+    
+    private void checkStageClear() {
+        if ((stage == 1 && score >= 10) || (stage == 2 && score >= 20)) {
+            showStageClearMessage();
+        }
+    }
+    
+    private void showStageClearMessage() {
+        String message = (stage == 1) ? "STAGE1 CLEAR" : "ALL STAGE CLEAR\n좀비로부터 생존하셨습니다";
+        String button1Text = (stage == 1) ? "NEXT STAGE" : "종료";
+        String button2Text = "STOP";
+
+        // 커스텀 JDialog 생성
+        JDialog dialog = new JDialog(parentFrame, "Stage Clear", true);
+        dialog.setLayout(new BorderLayout());
+
+        // 메시지 라벨 추가
+        JLabel messageLabel = new JLabel(message, JLabel.CENTER);
+        dialog.add(messageLabel, BorderLayout.CENTER);
+
+        // 버튼 패널 추가
+        JPanel buttonPanel = new JPanel();
+        JButton button1 = new JButton(button1Text);
+        JButton button2 = new JButton(button2Text);
+
+        button1.addActionListener(e -> {
+            dialog.dispose();
+            if (stage == 1) {
+                // 다음 스테이지로 이동
+                parentFrame.getContentPane().removeAll();
+                Screen nextStage = new Screen(parentFrame, characterColor, 2); // 스테이지 2로 이동
+                parentFrame.add(nextStage);
+                parentFrame.revalidate();
+                parentFrame.repaint();
+                SwingUtilities.invokeLater(nextStage::requestFocusInWindow); // 포커스 설정
+            } else {
+                // 프로그램 종료
+                System.exit(0);
+            }
+        });
+        
+        button2.addActionListener(e -> System.exit(0));
+
+        buttonPanel.add(button1);
+        buttonPanel.add(button2);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setSize(300, 150);
+        dialog.setLocationRelativeTo(parentFrame);
+        dialog.setVisible(true);
     }
 
     // 투사체 이동 처리
@@ -115,7 +215,7 @@ class Screen extends JPanel implements KeyListener {
         Iterator<Projectile> iterator = projectiles.iterator();
         while (iterator.hasNext()) {
             Projectile projectile = iterator.next();
-            projectile.move(); // 투사체 이동
+            projectile.move(); // 투사체 이동 
 
             boolean hit = false;
             for (Enemy enemy : enemies) {
@@ -179,6 +279,16 @@ class Screen extends JPanel implements KeyListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
+        // 배경화면 그리기
+        if (bgImage != null) {
+            g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
+        }
+        
+        // 점수 표시
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.drawString("SCORE: " + score, getWidth() - 100, 20);
         
         // 캐릭터 체력바
         g.setColor(Color.RED);

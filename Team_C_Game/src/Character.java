@@ -13,6 +13,8 @@ import java.awt.image.ImageProducer;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 
 public class Character {
@@ -51,7 +53,7 @@ public class Character {
     			e.printStackTrace();
     		}
     	}
-    	else {
+    	else if (selectCharacter == 3){
     		try {
     			this.sprite = ImageIO.read(new File("res/batman.png"));
     			this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
@@ -332,15 +334,56 @@ public class Character {
         if (movingLeft) x = Math.max(-45 , x - 5);
         if (movingRight) x = Math.min(x + 5, 800 - 105);
     }
+	
+	
+	private long lastSoundTime = 0; // 마지막 소리 재생 시간 기록 변수
+	private static final long SOUND_DELAY_CHARACTER1 = 150; // 캐릭터1 소리 간격 150ms
+	private static final long SOUND_DELAY_CHARACTER2 = 2000; // 캐릭터2 소리 간격 2초
+	private static final long SOUND_DELAY_CHARACTER3 = 250; // 캐릭터3 소리 간격 250ms
     
     public void actionPressed(int keyCode) {
     	switch (keyCode) {
     	case KeyEvent.VK_A:
-    		stateIndex = 3; // 근접 공격
-    		break;
+            stateIndex = 3; // 근접 공격
+            long currentTimeA = System.currentTimeMillis();
+
+            // 선택한 캐릭터에 따른 소리 간격 설정
+            long soundDelayA = SOUND_DELAY_CHARACTER3; // 기본 소리 간격 2초
+
+            // 설정된 간격으로만 소리 재생
+            if (currentTimeA - lastSoundTime >= soundDelayA) {
+                File file = new File("res/TwiceSwingSound.wav");
+                playSound(file); // 소리 재생
+                lastSoundTime = currentTimeA; // 소리 재생 시간 기록
+            }
+            break;
     	case KeyEvent.VK_S:
-    		stateIndex = 4; // 사격
-    		break;
+            stateIndex = 4; // 사격
+            long currentTime = System.currentTimeMillis();
+
+            // 선택한 캐릭터에 따른 소리 간격 설정
+            long soundDelay = SOUND_DELAY_CHARACTER3; // 캐릭터 3의 경우 (250ms)
+            if (getSelectCharacter() == 1) {
+                soundDelay = SOUND_DELAY_CHARACTER1; // 캐릭터 1일 경우 150ms
+            } else if (getSelectCharacter() == 2) {
+                soundDelay = SOUND_DELAY_CHARACTER2; // 캐릭터 2일 경우 2초
+            }
+
+            // 설정된 간격으로만 소리 재생
+            if (currentTime - lastSoundTime >= soundDelay) {
+                if (getSelectCharacter() == 1) {
+                    File file1 = new File("res/RifleSound.wav");
+                    playSound(file1);
+                }else if (getSelectCharacter() == 2) {
+                    File file2 = new File("res/ShotgunSound.wav");
+                    playSound(file2);
+                } else if (getSelectCharacter() == 3){
+                    File file3 = new File("res/BigSwingSound.wav");
+                    playSound(file3);
+                }
+                lastSoundTime = currentTime; // 소리 재생 시간 기록
+            }
+            break;
     	case KeyEvent.VK_D:
     		stateIndex = 5; // 죽음
     		break;
@@ -383,5 +426,16 @@ public class Character {
                 break;
         }
     }
+    private void playSound(File file) {
+		Clip clip = null;
+		try {
+			clip = AudioSystem.getClip();
+			clip.open(AudioSystem.getAudioInputStream(file));
+			clip.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 }
 

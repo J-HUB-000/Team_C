@@ -30,12 +30,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 class Screen extends JPanel implements KeyListener {
-    private int x = 350, y = 384; // 캐릭터의 초기 위치
+    private int x = 350, y = 400; // 캐릭터의 초기 위치
     private int health = 100; // 캐릭터의 초기 체력
     private boolean jumping = false, movingLeft = false, movingRight = false, invincible = false;
     // 점프 여부, 왼쪽/오른쪽 이동 여부, 무적 상태 여부를 나타내는 플래그
     private int velocityY = 0; // 캐릭터의 y축 속도 (점프/낙하)
-    private final int groundY = 384; // 캐릭터가 설 수 있는 바닥의 y축 위치
+    private final int groundY = 400; // 캐릭터가 설 수 있는 바닥의 y축 위치
     private final Timer movementTimer, enemySpawnTimer, invincibilityTimer;
     // 움직임, 적 생성, 무적 상태 관리를 위한 타이머
     private final JFrame parentFrame;
@@ -131,7 +131,7 @@ class Screen extends JPanel implements KeyListener {
     private void spawnEnemy() {
         int side = random.nextInt(2); // 적이 생성될 방향 (왼쪽: 0, 오른쪽: 1)
         int enemyX = (side == 0) ? 0 : getWidth(); // 적의 초기 x 위치
-        enemies.add(new Enemy(enemyX, groundY, 40)); // 적 추가
+        enemies.add(new Enemy(enemyX, groundY, 30)); // 적 추가
     }
 
     // 적 이동 처리
@@ -139,11 +139,11 @@ class Screen extends JPanel implements KeyListener {
         Iterator<Enemy> iterator = enemies.iterator();
         while (iterator.hasNext()) {
             Enemy enemy = iterator.next();
-            if (enemy.x < x-50) { 
+            if (enemy.x < x) { 
             	enemy.x += 1; // 캐릭터 방향으로 이동
             	enemy.facingLeft = false; // 캐릭터 방향에 따라 좀비 좌우 변경
             }
-            else if (enemy.x > x-10) {
+            else if (enemy.x > x) {
             	enemy.x -= 1;
             	enemy.facingLeft = true;
             }
@@ -248,7 +248,7 @@ class Screen extends JPanel implements KeyListener {
             for (Enemy enemy : enemies) {
                 // 투사체가 적과 충돌했는지 검사
                 if (new Rectangle(projectile.x, projectile.y, projectile.size, projectile.size)
-                        .intersects(new Rectangle(enemy.x, enemy.y, enemy.size, enemy.size+15))) {
+                        .intersects(new Rectangle(enemy.x, enemy.y, enemy.size, enemy.size))) {
                     enemy.health--; // 적 체력 감소
                     hit = true;
                     break;
@@ -263,7 +263,7 @@ class Screen extends JPanel implements KeyListener {
     private void checkCollisions() {
         if (!invincible) { // 무적 상태가 아닐 때만 충돌 검사
             for (Enemy enemy : enemies) {
-                if (new Rectangle(x+10, y, 20, 50).intersects(new Rectangle(enemy.x+30, enemy.y, enemy.size,enemy.size))) {
+                if (new Rectangle(x, y, 50, 50).intersects(new Rectangle(enemy.x, enemy.y, enemy.size, enemy.size))) {
                     health -= 10; // 충돌 시 체력 감소
                     invincible = true; // 무적 상태 활성화
                     invincibilityTimer.start(); // 무적 상태 타이머 시작
@@ -277,100 +277,69 @@ class Screen extends JPanel implements KeyListener {
             }
         }
     }
-    
-    //근접 공격 충돌 처리
+
+    // 근접 공격 처리
     private void performMeleeAttack() {
-        if (meleeAttackCooldown) return; // 쿨타임 중이면 무시
+    	if (meleeAttackCooldown) return; // 쿨타임 중이면 무시
         meleeAttackCooldown = true; // 쿨타임 활성화
         
-        // 공격 범위 설정
-        int attackX = (lastDirection == 1) ? x + 30 : x - 40; // 공격 방향에 따른 x 좌표 (왼쪽이면 -40, 오른쪽이면 +30)
-        int attackWidth = 50; // 공격 범위
-        Rectangle attackArea = new Rectangle(attackX, y+30, attackWidth, 50); // 공격 범위 (높이는 50으로 설정)
+        int attackX = (lastDirection == 1) ? x + 50 : x - 50; // 공격 방향에 따른 x 좌표
+        int attackWidth = 25; // 공격 범위
+        Rectangle attackArea = new Rectangle(attackX, y, attackWidth, 50);
 
-        // 적과의 충돌 검사
         Iterator<Enemy> iterator = enemies.iterator();
         while (iterator.hasNext()) {
             Enemy enemy = iterator.next();
-            Rectangle enemyRect = new Rectangle(enemy.x+30, enemy.y, enemy.size, enemy.size+60);
+            Rectangle enemyRect = new Rectangle(enemy.x, enemy.y, enemy.size, enemy.size);
             if (attackArea.intersects(enemyRect)) {
                 enemy.health--; // 적 체력 감소
                 if (enemy.health <= 0) iterator.remove(); // 체력이 0 이하인 적 제거
             }
         }
-        
         // 일정 시간 후 쿨타임 해제
         Timer cooldownTimer = new Timer(300, e -> meleeAttackCooldown = false); // 300ms 쿨타임
         cooldownTimer.setRepeats(false);
         cooldownTimer.start();
     }
 
-
     // 화면을 그리는 메소드
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
+        
         // 배경화면 그리기
         if (bgImage != null) {
             g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
         }
-<<<<<<< HEAD
         
         int groundHeight = 90; // 바닥의 높이 
         g.setColor(new Color(101, 67, 33)); // 어두운 갈색 
         g.fillRect(0, getHeight() - groundHeight, getWidth(), groundHeight); // 네모 박스 그리기
         
-=======
-
->>>>>>> branch 'Develop' of https://github.com/J-HUB-000/Team_C.git
         // 점수 표시
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 20));
         g.drawString("SCORE: " + score, getWidth() - 100, 20);
-
+        
         // 캐릭터 체력바
         g.setColor(Color.RED);
         g.fillRect(x, y - 10, 50, 10); // 체력바 배경
         g.setColor(Color.GREEN);
         g.fillRect(x, y - 10, health / 2, 10); // 체력바 표시
-
-        // 캐릭터 충돌 영역 그리기
-        g.setColor(Color.BLUE);
-        g.drawRect(x+10, y, 20, 50); // 캐릭터의 충돌 영역 (사각형)
-
+        
         // 적
         for (Enemy enemy : enemies) {
             enemy.draw(g, this);
-            // 적의 충돌 영역 그리기
-            g.setColor(Color.RED);
-            g.drawRect(enemy.x+30, enemy.y, enemy.size, enemy.size+60); // 적의 충돌 영역 (사각형)
         }
-
+        
         // 투사체
         g.setColor(Color.ORANGE);
-        for (Projectile projectile : projectiles) {
+        for (Projectile projectile : projectiles)
             g.fillRect(projectile.x, projectile.y, projectile.size, projectile.size);
-
-            // 투사체의 충돌 영역 그리기
-            g.setColor(Color.YELLOW);
-            g.drawRect(projectile.x, projectile.y, projectile.size, projectile.size); // 투사체 충돌 영역 (사각형)
-        }
-
-     // 근접 공격 범위 그리기
-        if (lastDirection == 1) { // 오른쪽 공격
-            g.setColor(Color.CYAN);
-            g.drawRect(x + 30, y+30, 50, 50); // 근접 공격 범위 (오른쪽)
-        } else if (lastDirection == -1) { // 왼쪽 공격
-            g.setColor(Color.CYAN);
-            g.drawRect(x - 40, y+30, 50, 50); // 근접 공격 범위 (왼쪽)
-        }
-
-
-        // 캐릭터 그리기
+        
+        // 캐릭터
         character.draw(g, this); // 커스텀 캐릭터 그리기
     }
-
     
     public void characterMove(int keyCode) {
     	switch (keyCode) {
@@ -453,36 +422,30 @@ class Screen extends JPanel implements KeyListener {
         actionTimers.put(keyCode, timer);
     }
     
-    private boolean shotgunCooldown = false; // 샷건 쿨타임 상태
-
  // 투사체 발사 처리
- private void fireProjectile() {
-     if (projectileAttackCooldown || shotgunCooldown) return; // 쿨타임 중이면 무시
+    private void fireProjectile() {
+        if (projectileAttackCooldown) return; // 쿨타임 중이면 무시
+        projectileAttackCooldown = true; // 쿨타임 활성화
 
-     projectileAttackCooldown = true; // 기본 쿨타임 활성화
+        int speed = lastDirection * 10; // 방향에 따른 투사체 속도
+        
+        if (character.getSelectCharacter() == 2) {
+            // 캐릭터 2가 선택된 경우 3발의 총알을 동시에 발사
+            projectiles.add(new Projectile(x + 25, y + 25, speed)); // 첫 번째 총알
+            projectiles.add(new Projectile(x + 25, y + 25, speed + 2)); // 두 번째 총알 (약간 더 빠르게)
+            projectiles.add(new Projectile(x + 25, y + 25, speed - 2)); // 세 번째 총알 (약간 더 느리게)
+        }
+        else if (character.getSelectCharacter() == 3) {
+            
+        }
+        else {
+            // 기본적으로 한 발만 발사
+            projectiles.add(new Projectile(x + 25, y + 25, speed));
+        }
 
-     int speed = lastDirection * 10; // 방향에 따른 투사체 속도
-     
-     if (character.getSelectCharacter() == 2) { // 샷건 캐릭터
-         // 3발의 총알을 동시에 발사
-         projectiles.add(new Projectile(x + 25, y + 50, speed)); // 첫 번째 총알
-         projectiles.add(new Projectile(x + 25, y + 50, speed + 2)); // 두 번째 총알 (약간 더 빠르게)
-         projectiles.add(new Projectile(x + 25, y + 50, speed - 2)); // 세 번째 총알 (약간 더 느리게)
-
-         // 샷건 쿨타임을 2초로 설정 (기본 3발 발사 후 2초 동안 발사 불가)
-         shotgunCooldown = true;
-         Timer shotgunCooldownTimer = new Timer(2000, e -> shotgunCooldown = false); // 2000ms 후에 쿨타임 해제
-         shotgunCooldownTimer.setRepeats(false);
-         shotgunCooldownTimer.start();
-     } else {
-         // 기본 총알 발사
-         projectiles.add(new Projectile(x + 25, y + 44, speed));
-     }
-
-     // 일정 시간 후 쿨타임 해제
-     coolTime(200); // 기본 쿨타임 (200ms)
- }
-
+        // 일정 시간 후 쿨타임 해제
+        coolTime(200);
+    }
 
 
 	// 일정 시간 후 쿨타임 해제

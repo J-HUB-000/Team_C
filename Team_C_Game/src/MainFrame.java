@@ -1,5 +1,8 @@
 
+import java.awt.Color;
+
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 public class MainFrame extends JFrame{
 	public MainFrame() {        // 프레임 설정
@@ -10,10 +13,14 @@ public class MainFrame extends JFrame{
         setResizable(false);
 
         // Screen 패널 추가
-        Title screen = new Title(this);
-        add(screen);
+        Title titleScreen = new Title(this);
+        add(titleScreen);
 
         setVisible(true);
+	}
+	
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> new MainFrame());
 	}
 	
 }

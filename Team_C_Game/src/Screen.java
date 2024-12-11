@@ -1,5 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -61,6 +62,7 @@ class Screen extends JPanel implements KeyListener {
     public Screen(JFrame parentFrame, Color characterColor, int stage) {
         this.parentFrame = parentFrame;
         this.characterColor = characterColor;
+        this.stage = stage;
 
         setBackground(Color.WHITE); // 배경색 설정
         setFocusable(true); // 키 이벤트 활성화
@@ -164,9 +166,9 @@ class Screen extends JPanel implements KeyListener {
             showStageClearMessage();
         }
     }
-    
+
     private void showStageClearMessage() {
-        String message = (stage == 1) ? "STAGE1 CLEAR" : "ALL STAGE CLEAR\n좀비로부터 생존하셨습니다";
+        String mainMessage = (stage == 1) ? "STAGE1 CLEAR" : "<html><div style='text-align: center;'>ALL STAGE CLEAR<br>좀비로부터 생존하셨습니다</div></html>";
         String button1Text = (stage == 1) ? "NEXT STAGE" : "종료";
         String button2Text = "STOP";
 
@@ -175,13 +177,27 @@ class Screen extends JPanel implements KeyListener {
         dialog.setLayout(new BorderLayout());
 
         // 메시지 라벨 추가
-        JLabel messageLabel = new JLabel(message, JLabel.CENTER);
+        JLabel messageLabel = new JLabel(mainMessage, JLabel.CENTER);
+        messageLabel.setFont(new Font("Arial", Font.BOLD, 20)); // 글씨 크기 설정
         dialog.add(messageLabel, BorderLayout.CENTER);
 
+        // STOP 버튼 설명 라벨 추가
+        JLabel stopDescriptionLabel = new JLabel("STOP 버튼을 누르면 로비로 돌아갑니다", JLabel.CENTER);
+        stopDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 12)); // 작은 글씨
+        stopDescriptionLabel.setForeground(Color.BLACK); // 검정색 글씨
+
         // 버튼 패널 추가
-        JPanel buttonPanel = new JPanel();
+        JPanel buttonPanel = new JPanel(new BorderLayout());
+        buttonPanel.add(stopDescriptionLabel, BorderLayout.NORTH); // 설명 라벨 추가
+
+        JPanel buttons = new JPanel();
+        buttons.setLayout(new FlowLayout()); // 기본 생성자 사용
+
         JButton button1 = new JButton(button1Text);
         JButton button2 = new JButton(button2Text);
+
+        button1.setFont(new Font("Arial", Font.PLAIN, 14)); // 버튼 글씨 크기 설정
+        button2.setFont(new Font("Arial", Font.PLAIN, 14)); // 버튼 글씨 크기 설정
 
         button1.addActionListener(e -> {
             dialog.dispose();
@@ -198,17 +214,28 @@ class Screen extends JPanel implements KeyListener {
                 System.exit(0);
             }
         });
-        
-        button2.addActionListener(e -> System.exit(0));
 
-        buttonPanel.add(button1);
-        buttonPanel.add(button2);
+        button2.addActionListener(e -> {
+            dialog.dispose();
+            // 첫 화면으로 돌아가기
+            parentFrame.getContentPane().removeAll();
+            Title titleScreen = new Title(parentFrame); // 초기 화면 패널 추가
+            parentFrame.add(titleScreen);
+            parentFrame.revalidate();
+            parentFrame.repaint();
+        });
+
+        buttons.add(button1);
+        buttons.add(button2);
+        buttonPanel.add(buttons, BorderLayout.CENTER);
         dialog.add(buttonPanel, BorderLayout.SOUTH);
 
-        dialog.setSize(300, 150);
+        dialog.setSize(400, 200);
         dialog.setLocationRelativeTo(parentFrame);
         dialog.setVisible(true);
     }
+
+
 
     // 투사체 이동 처리
     private void moveProjectiles() {
@@ -284,6 +311,10 @@ class Screen extends JPanel implements KeyListener {
         if (bgImage != null) {
             g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
         }
+        
+        int groundHeight = 90; // 바닥의 높이 
+        g.setColor(new Color(101, 67, 33)); // 어두운 갈색 
+        g.fillRect(0, getHeight() - groundHeight, getWidth(), groundHeight); // 네모 박스 그리기
         
         // 점수 표시
         g.setColor(Color.WHITE);

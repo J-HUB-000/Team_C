@@ -39,10 +39,7 @@ class Enemy {
     }
     
     public void Flip(boolean facingLeft) {
-    	if(facingLeft = false) {
-    		this.facingLeft = false;
-    	} else
-    		this.facingLeft = true;
+        this.facingLeft = facingLeft;
     }
     
     private BufferedImage transformColorToTransparency(BufferedImage image, Color color) {

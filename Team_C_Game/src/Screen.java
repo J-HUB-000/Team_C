@@ -30,12 +30,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 class Screen extends JPanel implements KeyListener {
-    private int x = 350, y = 400; // 캐릭터의 초기 위치
+    private int x = 350, y = 384; // 캐릭터의 초기 위치
     private int health = 100; // 캐릭터의 초기 체력
     private boolean jumping = false, movingLeft = false, movingRight = false, invincible = false;
     // 점프 여부, 왼쪽/오른쪽 이동 여부, 무적 상태 여부를 나타내는 플래그
     private int velocityY = 0; // 캐릭터의 y축 속도 (점프/낙하)
-    private final int groundY = 400; // 캐릭터가 설 수 있는 바닥의 y축 위치
+    private final int groundY = 384; // 캐릭터가 설 수 있는 바닥의 y축 위치
     private final Timer movementTimer, enemySpawnTimer, invincibilityTimer;
     // 움직임, 적 생성, 무적 상태 관리를 위한 타이머
     private final JFrame parentFrame;
@@ -52,11 +52,11 @@ class Screen extends JPanel implements KeyListener {
     private int delay, select = 0; 
     private boolean meleeAttackCooldown = false; // A키 공격 쿨타임 상태
     private boolean projectileAttackCooldown = false; // S키 공격 쿨타임 상태
-
+    private boolean shotgunCooldown = false; // 샷건 쿨타임 상태
     private Image bgImage;
     private Clip bgmClip;
     private int score = 0; //점수
-    private int stage =1; // 현재 스테이
+    private int stage = 1; // 현재 스테이지
     
     // 생성자: 화면 초기화 및 타이머 설정
     public Screen(JFrame parentFrame, Color characterColor, int stage) {
@@ -94,9 +94,9 @@ class Screen extends JPanel implements KeyListener {
             repaint(); // 화면 갱신
         });
         // 적 생성 타이머
-        enemySpawnTimer = new Timer(600 + random.nextInt(1000), e -> spawnEnemy());
+        enemySpawnTimer = new Timer(500 + random.nextInt(100), e -> spawnEnemy());
         // 무적 상태 해제 타이머
-        invincibilityTimer = new Timer(500, e -> invincible = false);
+        invincibilityTimer = new Timer(1000, e -> invincible = false);
 
         movementTimer.start(); // 타이머 시작
         enemySpawnTimer.start();
@@ -104,7 +104,13 @@ class Screen extends JPanel implements KeyListener {
     
     private void loadBackgroundImage() {
         try {
-            String bgFile = (stage == 1) ? "res/bg1.jpg" : "res/bg2.jpg";
+            String bgFile;
+            switch (stage) {
+                case 1: bgFile = "res/bg1.jpg"; break;
+                case 2: bgFile = "res/bg2.jpg"; break;
+                //배경 이미지 추가.
+                default: bgFile = "res/default.jpg"; // 기본 배경
+            }
             ImageIcon icon = new ImageIcon(bgFile);
             bgImage = icon.getImage();
         } catch (Exception e) {
@@ -113,25 +119,131 @@ class Screen extends JPanel implements KeyListener {
     }
 
     private void initialize() {
+        enemies.clear();  // 적 목록 초기화
+        projectiles.clear();  // 투사체 초기화
         loadBackgroundImage();
         playBackgroundMusic();
     }
     
     private void playBackgroundMusic() {
-    	try {
-    		AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("res/bgm1.mp3"));
-    		bgmClip = AudioSystem.getClip(); bgmClip.open(audioInputStream);
-    		bgmClip.loop(Clip.LOOP_CONTINUOUSLY); // 반복 재생
-    	} catch (Exception e) {
-    			e.printStackTrace();
-    	}
+        try {
+            // 기존 클립이 재생 중이면 정지하고 닫기
+            if (bgmClip != null && bgmClip.isRunning()) {
+                bgmClip.stop();
+                bgmClip.close();
+            }
+            String musicFile;
+            switch (stage) {
+                case 1: 
+                    musicFile = "res/bgm1.wav"; 
+                    break;
+                case 2: 
+                    musicFile = "res/bgm1.wav"; 
+                    break;
+                // 추가 스테이지 음악 파일
+                default: 
+                    musicFile = "res/bgm1.wav";
+            }
+            
+            // 새로운 음악 파일 로드 및 재생
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(musicFile));
+            bgmClip = AudioSystem.getClip();
+            bgmClip.open(audioInputStream);
+            bgmClip.loop(Clip.LOOP_CONTINUOUSLY); // 반복 재생
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void stopBackgroundMusic() {
+        if (bgmClip != null) {
+            bgmClip.stop();
+            bgmClip.close();
+        }
     }
 
     // 적 생성 로직
     private void spawnEnemy() {
         int side = random.nextInt(2); // 적이 생성될 방향 (왼쪽: 0, 오른쪽: 1)
         int enemyX = (side == 0) ? 0 : getWidth(); // 적의 초기 x 위치
-        enemies.add(new Enemy(enemyX, groundY, 30)); // 적 추가
+        enemies.add(new Enemy(enemyX, groundY, 40)); // 적 추가
+    }
+    
+    //스테이지 클리어 조건
+    private void checkStageClear() {
+        if ((stage == 1 && score >= 100) || (stage == 2 && score >= 5)) {
+            showStageClearMessage();
+        }
+    }
+    
+    public void cleanup() {
+        // 실행 중인 타이머 정지
+        if (movementTimer != null) movementTimer.stop();
+        if (enemySpawnTimer != null) enemySpawnTimer.stop();
+        if (invincibilityTimer != null) invincibilityTimer.stop();
+
+        // 배경음악 정지
+        stopBackgroundMusic();
+
+        // 기타 리소스 정리 (필요에 따라 추가)
+        keyStates.clear();
+        actionTimers.values().forEach(Timer::stop);
+        actionTimers.clear();
+    }
+
+    private void showStageClearMessage() {
+    	String message = (stage == 1) ? "STAGE 클리어" : "당신은 생존했습니다.";
+        String button1Text = (stage == 1) ? "다음 스테이지" : "종료";
+        String button2Text = "타이틀 화면으로";
+
+        // 커스텀 JDialog 생성
+        JDialog dialog = new JDialog(parentFrame, "Stage Clear", true);
+        dialog.setLayout(new BorderLayout());
+
+        // 메시지 라벨 추가
+        JLabel messageLabel = new JLabel(message, JLabel.CENTER);
+        dialog.add(messageLabel, BorderLayout.CENTER);
+
+        // 버튼 패널 추가
+        JPanel buttonPanel = new JPanel();
+        JButton button1 = new JButton(button1Text);
+        JButton button2 = new JButton(button2Text);
+
+        button1.addActionListener(e -> {
+            dialog.dispose();
+            if (stage == 1) {
+                // 현재 Screen의 배경음악을 정리하고, 새 스테이지로 이동
+                stopBackgroundMusic(); // 현재 배경음악 중지
+                parentFrame.getContentPane().removeAll();
+                Screen nextStage = new Screen(parentFrame, characterColor, 2); // 스테이지 2로 이동
+                parentFrame.add(nextStage);
+                parentFrame.revalidate();
+                parentFrame.repaint();
+                SwingUtilities.invokeLater(nextStage::requestFocusInWindow); // 포커스 설정
+            } else {
+                // 모든 스테이지 클리어 후 종료
+                System.exit(0);
+            }
+        });
+
+        button2.addActionListener(e -> {
+            dialog.dispose();
+            cleanup(); // 현재 Screen 리소스 정리
+            // 첫 화면으로 돌아가기
+            parentFrame.getContentPane().removeAll();
+            Title titleScreen = new Title(parentFrame); // 초기 화면 패널 추가
+            parentFrame.add(titleScreen);
+            parentFrame.revalidate();
+            parentFrame.repaint();
+        });
+
+        buttonPanel.add(button1);
+        buttonPanel.add(button2);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setSize(300, 150);
+        dialog.setLocationRelativeTo(parentFrame);
+        dialog.setVisible(true);
     }
 
     // 적 이동 처리
@@ -155,87 +267,11 @@ class Screen extends JPanel implements KeyListener {
             
             if (enemy.health <= 0) {
             	iterator.remove(); // 체력이 0 이하인 적 제거
-                score+=1; // 적을 죽일 때마다 점수 증가
+                score++; // 적을 죽일 때마다 점수 증가
                 checkStageClear(); // 스테이지 클리어 조건 확인
             }
         }
     }
-    
-    private void checkStageClear() {
-        if ((stage == 1 && score >= 10) || (stage == 2 && score >= 20)) {
-            showStageClearMessage();
-        }
-    }
-
-    private void showStageClearMessage() {
-        String mainMessage = (stage == 1) ? "STAGE1 CLEAR" : "<html><div style='text-align: center;'>ALL STAGE CLEAR<br>좀비로부터 생존하셨습니다</div></html>";
-        String button1Text = (stage == 1) ? "NEXT STAGE" : "종료";
-        String button2Text = "STOP";
-
-        // 커스텀 JDialog 생성
-        JDialog dialog = new JDialog(parentFrame, "Stage Clear", true);
-        dialog.setLayout(new BorderLayout());
-
-        // 메시지 라벨 추가
-        JLabel messageLabel = new JLabel(mainMessage, JLabel.CENTER);
-        messageLabel.setFont(new Font("Arial", Font.BOLD, 20)); // 글씨 크기 설정
-        dialog.add(messageLabel, BorderLayout.CENTER);
-
-        // STOP 버튼 설명 라벨 추가
-        JLabel stopDescriptionLabel = new JLabel("STOP 버튼을 누르면 로비로 돌아갑니다", JLabel.CENTER);
-        stopDescriptionLabel.setFont(new Font("Arial", Font.PLAIN, 12)); // 작은 글씨
-        stopDescriptionLabel.setForeground(Color.BLACK); // 검정색 글씨
-
-        // 버튼 패널 추가
-        JPanel buttonPanel = new JPanel(new BorderLayout());
-        buttonPanel.add(stopDescriptionLabel, BorderLayout.NORTH); // 설명 라벨 추가
-
-        JPanel buttons = new JPanel();
-        buttons.setLayout(new FlowLayout()); // 기본 생성자 사용
-
-        JButton button1 = new JButton(button1Text);
-        JButton button2 = new JButton(button2Text);
-
-        button1.setFont(new Font("Arial", Font.PLAIN, 14)); // 버튼 글씨 크기 설정
-        button2.setFont(new Font("Arial", Font.PLAIN, 14)); // 버튼 글씨 크기 설정
-
-        button1.addActionListener(e -> {
-            dialog.dispose();
-            if (stage == 1) {
-                // 다음 스테이지로 이동
-                parentFrame.getContentPane().removeAll();
-                Screen nextStage = new Screen(parentFrame, characterColor, 2); // 스테이지 2로 이동
-                parentFrame.add(nextStage);
-                parentFrame.revalidate();
-                parentFrame.repaint();
-                SwingUtilities.invokeLater(nextStage::requestFocusInWindow); // 포커스 설정
-            } else {
-                // 프로그램 종료
-                System.exit(0);
-            }
-        });
-
-        button2.addActionListener(e -> {
-            dialog.dispose();
-            // 첫 화면으로 돌아가기
-            parentFrame.getContentPane().removeAll();
-            Title titleScreen = new Title(parentFrame); // 초기 화면 패널 추가
-            parentFrame.add(titleScreen);
-            parentFrame.revalidate();
-            parentFrame.repaint();
-        });
-
-        buttons.add(button1);
-        buttons.add(button2);
-        buttonPanel.add(buttons, BorderLayout.CENTER);
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
-
-        dialog.setSize(400, 200);
-        dialog.setLocationRelativeTo(parentFrame);
-        dialog.setVisible(true);
-    }
-
-
 
     // 투사체 이동 처리
     private void moveProjectiles() {
@@ -248,14 +284,15 @@ class Screen extends JPanel implements KeyListener {
             for (Enemy enemy : enemies) {
                 // 투사체가 적과 충돌했는지 검사
                 if (new Rectangle(projectile.x, projectile.y, projectile.size, projectile.size)
-                        .intersects(new Rectangle(enemy.x, enemy.y, enemy.size, enemy.size))) {
+                        .intersects(new Rectangle(enemy.x, enemy.y, enemy.size, enemy.size+15))) {
                     enemy.health--; // 적 체력 감소
                     hit = true;
                     break;
                 }
             }
-
-            if (hit || projectile.isOutOfBounds()) iterator.remove(); // 충돌하거나 화면 밖으로 나간 투사체 제거
+            
+            // 충돌하거나 화면 밖으로 나간 투사체 제거
+            if (hit || projectile.isOutOfBounds()) iterator.remove(); 
         }
     }
 
@@ -263,7 +300,7 @@ class Screen extends JPanel implements KeyListener {
     private void checkCollisions() {
         if (!invincible) { // 무적 상태가 아닐 때만 충돌 검사
             for (Enemy enemy : enemies) {
-                if (new Rectangle(x, y, 50, 50).intersects(new Rectangle(enemy.x, enemy.y, enemy.size, enemy.size))) {
+                if (new Rectangle(x+10, y, 20, 50).intersects(new Rectangle(enemy.x+30, enemy.y, enemy.size,enemy.size))) {
                     health -= 10; // 충돌 시 체력 감소
                     invincible = true; // 무적 상태 활성화
                     invincibilityTimer.start(); // 무적 상태 타이머 시작
@@ -280,33 +317,62 @@ class Screen extends JPanel implements KeyListener {
 
     // 근접 공격 처리
     private void performMeleeAttack() {
-    	if (meleeAttackCooldown) return; // 쿨타임 중이면 무시
+        if (meleeAttackCooldown) return; // 쿨타임 중이면 무시
         meleeAttackCooldown = true; // 쿨타임 활성화
-        
-        int attackX = (lastDirection == 1) ? x + 50 : x - 50; // 공격 방향에 따른 x 좌표
-        int attackWidth = 25; // 공격 범위
-        Rectangle attackArea = new Rectangle(attackX, y, attackWidth, 50);
+        int attackX = (lastDirection == 1) ? x - 40 : x + 40 ; // 공격 방향에 따른 x 좌표
 
-        Iterator<Enemy> iterator = enemies.iterator();
-        while (iterator.hasNext()) {
-            Enemy enemy = iterator.next();
-            Rectangle enemyRect = new Rectangle(enemy.x, enemy.y, enemy.size, enemy.size);
-            if (attackArea.intersects(enemyRect)) {
-                enemy.health--; // 적 체력 감소
-                if (enemy.health <= 0) iterator.remove(); // 체력이 0 이하인 적 제거
-            }
-        }
+        // 근접 공격 범위에서 투사체 발사
+        projectiles.add(new Projectile(attackX, y + 50, lastDirection * 50)); // 공격 방향에 맞는 투사체 발사
+
         // 일정 시간 후 쿨타임 해제
-        Timer cooldownTimer = new Timer(300, e -> meleeAttackCooldown = false); // 300ms 쿨타임
-        cooldownTimer.setRepeats(false);
-        cooldownTimer.start();
+        coolTime(200);
     }
+
+    // 투사체 발사 처리
+    private void fireProjectile() {
+        // 쿨타임 체크
+        if (projectileAttackCooldown || shotgunCooldown) return; // 이미 쿨타임 중이면 발사하지 않음
+
+        projectileAttackCooldown = true; // 기본 쿨타임 활성화
+
+        int speed = lastDirection * 20; // 방향에 따른 투사체 속도
+        
+        // 샷건 캐릭터일 경우
+        if (character.getSelectCharacter() == 2) {
+            // 3발의 총알을 동시에 발사
+            projectiles.add(new Projectile(x + 25, y + 50, speed)); // 첫 번째 총알
+            projectiles.add(new Projectile(x + 25, y + 50, speed + 2)); // 두 번째 총알 (약간 더 빠르게)
+            projectiles.add(new Projectile(x + 25, y + 50, speed - 2)); // 세 번째 총알 (약간 더 느리게)
+
+            // 샷건 쿨타임을 2초로 설정
+            shotgunCooldown = true;
+            Timer shotgunCooldownTimer = new Timer(2000, e -> shotgunCooldown = false); // 2000ms 후에 쿨타임 해제
+            shotgunCooldownTimer.setRepeats(false);
+            shotgunCooldownTimer.start();
+        } else {
+            // 기본 총알 발사
+            projectiles.add(new Projectile(x + 25, y + 44, speed));
+        }
+
+        // 기본 쿨타임을 200ms로 설정 (발사 후 200ms 동안 발사 불가)
+        coolTime(200); 
+    }
+
+	// 일정 시간 후 쿨타임 해제
+ 	private void coolTime(int delay) {
+ 		Timer cooldownTimer = new Timer(delay, e -> {
+ 			projectileAttackCooldown = false;
+ 			meleeAttackCooldown = false;
+ 		});
+ 		cooldownTimer.setRepeats(false);
+ 		cooldownTimer.start();
+	}
 
     // 화면을 그리는 메소드
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        
+
         // 배경화면 그리기
         if (bgImage != null) {
             g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
@@ -315,29 +381,51 @@ class Screen extends JPanel implements KeyListener {
         int groundHeight = 90; // 바닥의 높이 
         g.setColor(new Color(101, 67, 33)); // 어두운 갈색 
         g.fillRect(0, getHeight() - groundHeight, getWidth(), groundHeight); // 네모 박스 그리기
-        
+
         // 점수 표시
         g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 20));
-        g.drawString("SCORE: " + score, getWidth() - 100, 20);
-        
+        g.setFont(new Font("Arial", Font.BOLD, 30));
+        g.drawString("Score: " + score, getWidth() - 450, 40);
+
         // 캐릭터 체력바
         g.setColor(Color.RED);
         g.fillRect(x, y - 10, 50, 10); // 체력바 배경
         g.setColor(Color.GREEN);
         g.fillRect(x, y - 10, health / 2, 10); // 체력바 표시
-        
+
+        // 캐릭터 충돌 영역 그리기
+        g.setColor(Color.BLUE);
+        g.drawRect(x+10, y, 20, 50); // 캐릭터의 충돌 영역 (사각형)
+
         // 적
         for (Enemy enemy : enemies) {
             enemy.draw(g, this);
+            // 적의 충돌 영역 그리기
+            g.setColor(Color.RED);
+            g.drawRect(enemy.x+30, enemy.y, enemy.size, enemy.size+60); // 적의 충돌 영역 (사각형)
         }
-        
+
         // 투사체
         g.setColor(Color.ORANGE);
-        for (Projectile projectile : projectiles)
+        for (Projectile projectile : projectiles) {
             g.fillRect(projectile.x, projectile.y, projectile.size, projectile.size);
-        
-        // 캐릭터
+
+            // 투사체의 충돌 영역 그리기
+            g.setColor(Color.YELLOW);
+            g.drawRect(projectile.x, projectile.y, projectile.size, projectile.size); // 투사체 충돌 영역 (사각형)
+        }
+
+        // 근접 공격 범위 그리기
+        if (lastDirection == 1) { // 오른쪽 공격
+            g.setColor(Color.CYAN);
+            g.drawRect(x + 30, y+30, 50, 50); // 근접 공격 범위 (오른쪽)
+        } else if (lastDirection == -1) { // 왼쪽 공격
+            g.setColor(Color.CYAN);
+            g.drawRect(x - 40, y+30, 50, 50); // 근접 공격 범위 (왼쪽)
+        }
+
+
+        // 캐릭터 그리기
         character.draw(g, this); // 커스텀 캐릭터 그리기
     }
     
@@ -420,38 +508,5 @@ class Screen extends JPanel implements KeyListener {
         });
         timer.start();
         actionTimers.put(keyCode, timer);
-    }
-    
- // 투사체 발사 처리
-    private void fireProjectile() {
-        if (projectileAttackCooldown) return; // 쿨타임 중이면 무시
-        projectileAttackCooldown = true; // 쿨타임 활성화
-
-        int speed = lastDirection * 10; // 방향에 따른 투사체 속도
-        
-        if (character.getSelectCharacter() == 2) {
-            // 캐릭터 2가 선택된 경우 3발의 총알을 동시에 발사
-            projectiles.add(new Projectile(x + 25, y + 25, speed)); // 첫 번째 총알
-            projectiles.add(new Projectile(x + 25, y + 25, speed + 2)); // 두 번째 총알 (약간 더 빠르게)
-            projectiles.add(new Projectile(x + 25, y + 25, speed - 2)); // 세 번째 총알 (약간 더 느리게)
-        }
-        else if (character.getSelectCharacter() == 3) {
-            
-        }
-        else {
-            // 기본적으로 한 발만 발사
-            projectiles.add(new Projectile(x + 25, y + 25, speed));
-        }
-
-        // 일정 시간 후 쿨타임 해제
-        coolTime(200);
-    }
-
-
-	// 일정 시간 후 쿨타임 해제
-    private void coolTime(int delay) {
-            Timer cooldownTimer = new Timer(delay, e -> projectileAttackCooldown = false); // 400ms 쿨타임
-            cooldownTimer.setRepeats(false);
-            cooldownTimer.start();
     }
 }

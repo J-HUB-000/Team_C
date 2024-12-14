@@ -8,7 +8,6 @@ import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageProducer;
-import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
@@ -30,7 +29,7 @@ class Enemy {
     
     private void loadImage() {
         try {
-            sprite = ImageIO.read(new File("res/zombie1.png"));
+            sprite = ImageIO.read(getClass().getResource("/res/zombie1.png"));
             sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
             zombie_1();
         } catch (IOException e) {

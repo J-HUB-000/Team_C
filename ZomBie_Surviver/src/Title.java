@@ -1,23 +1,15 @@
 
-import java.awt.BorderLayout;
-import java.awt.Canvas;
+
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -25,11 +17,8 @@ import javax.swing.SwingUtilities;
 class Title extends JPanel {
     private final JFrame parentFrame;
     private JButton playButton;
-    private String selectedCharacter;
     private Color characterColor; // 캐릭터 색상 저장 
-    private Screen screen;
     private Image bgImage;
-    private Character character = new Character();
     private static int characterValue;
 
     public Title(JFrame parentFrame) {
@@ -76,9 +65,9 @@ class Title extends JPanel {
         Color[] characterColors = {Color.GREEN, Color.BLUE, Color.ORANGE};
         int[] buttonXPositions = {150, 350, 550}; // 버튼 위치 설정
         String[] characterImagePaths = {
-                "res/character1(soldier).png",  // 캐릭터 1 이미지 경로
-                "res/character2(shotgun).png",  // 캐릭터 2 이미지 경로
-                "res/character3(batman).png"   // 캐릭터 3 이미지 경로
+                "/res/character1(soldier).png",  // 캐릭터 1 이미지 경로
+                "/res/character2(shotgun).png",  // 캐릭터 2 이미지 경로
+                "/res/character3(batman).png"   // 캐릭터 3 이미지 경로
             };
 
         for (int i = 0; i < 3; i++) {
@@ -94,7 +83,7 @@ class Title extends JPanel {
             button.setBounds(buttonXPositions[i], 410, 120, 120); // 위치와 크기 설정
             
             //이미지 생성
-            ImageIcon icon = new ImageIcon(imagePath);
+            ImageIcon icon = new ImageIcon(getClass().getResource(imagePath));
             button.setIcon(icon);
             
             // 아이콘 가운데 정렬
@@ -113,7 +102,7 @@ class Title extends JPanel {
     
     private void loadBackgroundImage() {
         try {
-            ImageIcon icon = new ImageIcon("res/bg4.png");
+            ImageIcon icon = new ImageIcon(getClass().getResource("res/bg4.png"));
             bgImage = icon.getImage();
         } catch (Exception e) {
             e.printStackTrace();

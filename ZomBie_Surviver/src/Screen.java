@@ -1,15 +1,11 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,11 +13,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
+import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -52,7 +47,6 @@ class Screen extends JPanel implements KeyListener {
     private Character character = new Character(); // 캐릭터 객체
     private Enemy enemy = new Enemy(310,350,40); // 캐릭터 객체
     private int countNumber = 0; // 프레임 카운터
-    private int delay, select = 0; 
     private boolean meleeAttackCooldown = false; // A키 공격 쿨타임 상태
     private boolean projectileAttackCooldown = false; // S키 공격 쿨타임 상태
     private boolean shotgunCooldown = false; // 샷건 쿨타임 상태
@@ -106,17 +100,16 @@ class Screen extends JPanel implements KeyListener {
         enemySpawnTimer.start();
     }
     
+ // 이미지 로드
     private void loadBackgroundImage() {
         try {
             String bgFile;
             switch (stage) {
-                case 1: bgFile = "res/bg1.jpg"; break;
-                case 2: bgFile = "res/bg2.jpg"; break;
-                //배경 이미지 추가.
-                default: bgFile = "res/default.jpg"; // 기본 배경
+                case 1: bgFile = "/res/bg1.jpg"; break;
+                case 2: bgFile = "/res/bg2.jpg"; break;
+                default: bgFile = "/res/default.jpg";
             }
-            ImageIcon icon = new ImageIcon(bgFile);
-            bgImage = icon.getImage();
+            bgImage = ImageIO.read(getClass().getResource(bgFile));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -135,31 +128,26 @@ class Screen extends JPanel implements KeyListener {
         }
     }
     
+ // 음악 파일 로드
     private void playBackgroundMusic() {
         try {
-            // 기존 클립이 재생 중이면 정지하고 닫기
             if (bgmClip != null && bgmClip.isRunning()) {
                 bgmClip.stop();
                 bgmClip.close();
             }
+            
             String musicFile;
             switch (stage) {
-                case 1: 
-                    musicFile = "res/bgm1.wav"; 
-                    break;
-                case 2: 
-                    musicFile = "res/bgm1.wav"; 
-                    break;
-                // 추가 스테이지 음악 파일
-                default: 
-                    musicFile = "res/bgm1.wav";
+                case 1: musicFile = "/res/bgm1.wav"; break;
+                case 2: musicFile = "/res/bgm1.wav"; break;
+                default: musicFile = "/res/bgm1.wav";
             }
             
-            // 새로운 음악 파일 로드 및 재생
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(musicFile));
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
+                getClass().getResource(musicFile));
             bgmClip = AudioSystem.getClip();
             bgmClip.open(audioInputStream);
-            bgmClip.loop(Clip.LOOP_CONTINUOUSLY); // 반복 재생
+            bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -265,11 +253,11 @@ class Screen extends JPanel implements KeyListener {
             
             for (Enemy enemy : new ArrayList<>(enemies)) {  // 복사본으로 순회
                 if (enemy.x < x-50) { 
-                    enemy.x += 1;
+                    enemy.x += 3;
                     enemy.facingLeft = false;
                 }
                 else if (enemy.x > x-10) {
-                    enemy.x -= 1;
+                    enemy.x -= 3;
                     enemy.facingLeft = true;
                 }
                 
@@ -329,13 +317,7 @@ class Screen extends JPanel implements KeyListener {
             }
         }
     }
-    private void startInvincibilityTimer() {
-        invincibilityTimer = new Timer(1000, e -> {
-            invincible = false; // 무적 상태 종료
-        });
-        invincibilityTimer.setRepeats(false); // 한 번만 실행
-        invincibilityTimer.start(); // 타이머 시작
-    }
+
 
     
     // 근접 공격 처리
@@ -439,37 +421,16 @@ class Screen extends JPanel implements KeyListener {
         g.setColor(Color.GREEN);
         g.fillRect(x, y - 10, health / 2, 10); // 체력바 표시
 
-        // 캐릭터 충돌 영역 그리기
-        g.setColor(Color.BLUE);
-        g.drawRect(x+10, y, 20, 50); // 캐릭터의 충돌 영역 (사각형)
-
         // 적
         for (Enemy enemy : enemies) {
             enemy.draw(g, this);
-            // 적의 충돌 영역 그리기
-            g.setColor(Color.RED);
-            g.drawRect(enemy.x+30, enemy.y, enemy.size, enemy.size+60); // 적의 충돌 영역 (사각형)
         }
 
         // 투사체
         g.setColor(Color.ORANGE);
         for (Projectile projectile : projectiles) {
             g.fillRect(projectile.x, projectile.y, projectile.size, projectile.size);
-
-            // 투사체의 충돌 영역 그리기
-            g.setColor(Color.YELLOW);
-            g.drawRect(projectile.x, projectile.y, projectile.size, projectile.size); // 투사체 충돌 영역 (사각형)
         }
-
-        // 근접 공격 범위 그리기
-        if (lastDirection == 1) { // 오른쪽 공격
-            g.setColor(Color.CYAN);
-            g.drawRect(x + 30, y+30, 50, 50); // 근접 공격 ��위 (오른쪽)
-        } else if (lastDirection == -1) { // 왼쪽 공격
-            g.setColor(Color.CYAN);
-            g.drawRect(x - 40, y+30, 50, 50); // 근접 공격 범위 (왼쪽)
-        }
-
 
         // 캐릭터 그리기
         character.draw(g, this); // 커스텀 캐릭터 그리기

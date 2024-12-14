@@ -13,6 +13,7 @@ import java.awt.image.ImageProducer;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
@@ -35,35 +36,27 @@ public class Character {
     }
 
     private void loadImage(int selectCharacter) {
-    	if(selectCharacter == 1) {
-    		try {
-    			this.sprite = ImageIO.read(new File("res/soldier.png"));
-    			this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
-    			soldier();
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    	}
-    	else if (selectCharacter == 2) {
-    		try {
-    			this.sprite = ImageIO.read(new File("res/people.png"));
-    			this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
-    			shutgunMan();
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    	}
-    	else if (selectCharacter == 3){
-    		try {
-    			this.sprite = ImageIO.read(new File("res/batman.png"));
-    			this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
-    			batMan();
-    		} catch (IOException e) {
-    			e.printStackTrace();
-    		}
-    	}
+        try {
+            if(selectCharacter == 1) {
+                this.sprite = ImageIO.read(getClass().getResource("/res/soldier.png"));
+                this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
+                soldier();
+            }
+            else if (selectCharacter == 2) {
+                this.sprite = ImageIO.read(getClass().getResource("/res/people.png"));
+                this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
+                shutgunMan();
+            }
+            else if (selectCharacter == 3){
+                this.sprite = ImageIO.read(getClass().getResource("/res/batman.png"));
+                this.sprite = transformColorToTransparency(sprite, new Color(255, 255, 255));
+                batMan();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-
+    
     private void soldier() {
         states = new State[6];
 
@@ -372,16 +365,13 @@ public class Character {
             // 설정된 간격으로만 소리 재생
             if (currentTime - lastSoundTime >= soundDelay) {
                 if (getSelectCharacter() == 1) {
-                    File file1 = new File("res/RifleSound.wav");
-                    playSound(file1);
-                }else if (getSelectCharacter() == 2) {
-                    File file2 = new File("res/ShotgunSound.wav");
-                    playSound(file2);
-                } else if (getSelectCharacter() == 3){
-                    File file3 = new File("res/BigSwingSound.wav");
-                    playSound(file3);
+                    playSound(new File("RifleSound.wav"));
+                } else if (getSelectCharacter() == 2) {
+                    playSound(new File("ShotgunSound.wav"));
+                } else if (getSelectCharacter() == 3) {
+                    playSound(new File("BigSwingSound.wav"));
                 }
-                lastSoundTime = currentTime; // 소리 재생 시간 기록
+                lastSoundTime = currentTime;
             }
             break;
     	case KeyEvent.VK_LEFT:
@@ -421,15 +411,15 @@ public class Character {
                 break;
         }
     }
-    private void playSound(File file) {
-		Clip clip = null;
-		try {
-			clip = AudioSystem.getClip();
-			clip.open(AudioSystem.getAudioInputStream(file));
-			clip.start();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
+    private void playSound(File soundFile) {
+        try {
+            Clip clip = AudioSystem.getClip();
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
+                getClass().getResource("/res/" + soundFile.getName()));
+            clip.open(audioInputStream);
+            clip.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

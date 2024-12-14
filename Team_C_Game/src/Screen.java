@@ -36,7 +36,8 @@ class Screen extends JPanel implements KeyListener {
     // 점프 여부, 왼쪽/오른쪽 이동 여부, 무적 상태 여부를 나타내는 플래그
     private int velocityY = 0; // 캐릭터의 y축 속도 (점프/낙하)
     private final int groundY = 384; // 캐릭터가 설 수 있는 바닥의 y축 위치
-    private final Timer movementTimer, enemySpawnTimer, invincibilityTimer;
+    private final Timer movementTimer, enemySpawnTimer;
+	private Timer invincibilityTimer;
     // 움직임, 적 생성, 무적 상태 관리를 위한 타이머
     private final JFrame parentFrame;
     private final Color characterColor; // 캐릭터의 색상
@@ -123,6 +124,12 @@ class Screen extends JPanel implements KeyListener {
         projectiles.clear();  // 투사체 초기화
         loadBackgroundImage();
         playBackgroundMusic();
+     // 체력 초기화
+        if (stage == 1) {
+            health = 100; // 스테이지 1에서는 초기 체력 100
+        } else if (stage == 2) {
+            health = 100; // 스테이지 2에서는 체력 초기화
+        }
     }
     
     private void playBackgroundMusic() {
@@ -252,11 +259,11 @@ class Screen extends JPanel implements KeyListener {
         Iterator<Enemy> iterator = enemies.iterator();
         while (iterator.hasNext()) {
             Enemy enemy = iterator.next();
-            if (enemy.x < x) { 
+            if (enemy.x < x-50) { 
             	enemy.x += 1; // 캐릭터 방향으로 이동
             	enemy.facingLeft = false; // 캐릭터 방향에 따라 좀비 좌우 변경
             }
-            else if (enemy.x > x) {
+            else if (enemy.x > x-10) {
             	enemy.x -= 1;
             	enemy.facingLeft = true;
             }
@@ -315,6 +322,14 @@ class Screen extends JPanel implements KeyListener {
             }
         }
     }
+    private void startInvincibilityTimer() {
+        invincibilityTimer = new Timer(1000, e -> {
+            invincible = false; // 무적 상태 종료
+        });
+        invincibilityTimer.setRepeats(false); // 한 번만 실행
+        invincibilityTimer.start(); // 타이머 시작
+    }
+
     
     // 근접 공격 처리
     private void performMeleeAttack() {
@@ -359,9 +374,9 @@ class Screen extends JPanel implements KeyListener {
             projectiles.add(new Projectile(x + 25, y + 50, speed - 5)); // 세 번째 총알 (약간 더 느리게)
             projectiles.add(new Projectile(x + 25, y + 48, speed + 10)); // 세 번째 총알 (약간 더 느리게)
 
-            // 샷건 쿨타임을 1.3초로 설정
+            // 샷건 쿨타임을 2초로 설정
             shotgunCooldown = true;
-            Timer shotgunCooldownTimer = new Timer(1300, e -> shotgunCooldown = false); // 2000ms 후에 쿨타임 해제
+            Timer shotgunCooldownTimer = new Timer(2000, e -> shotgunCooldown = false); // 2000ms 후에 쿨타임 해제
             shotgunCooldownTimer.setRepeats(false);
             shotgunCooldownTimer.start();
         } else {

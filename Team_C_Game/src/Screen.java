@@ -169,9 +169,10 @@ class Screen extends JPanel implements KeyListener {
         enemies.add(new Enemy(enemyX, groundY, 40)); // 적 추가
     }
     
+    private int round = 10;
     //스테이지 클리어 조건
     private void checkStageClear() {
-        if ((stage == 1 && score >= 100) || (stage == 2 && score >= 5)) {
+        if ((stage == 1 && score >= round) || (stage == 2 && score >= round + 5)) {
             showStageClearMessage();
         }
     }
@@ -340,13 +341,14 @@ class Screen extends JPanel implements KeyListener {
         // 샷건 캐릭터일 경우
         if (character.getSelectCharacter() == 2) {
             // 3발의 총알을 동시에 발사
-            projectiles.add(new Projectile(x + 25, y + 50, speed)); // 첫 번째 총알
-            projectiles.add(new Projectile(x + 25, y + 50, speed + 2)); // 두 번째 총알 (약간 더 빠르게)
-            projectiles.add(new Projectile(x + 25, y + 50, speed - 2)); // 세 번째 총알 (약간 더 느리게)
+            projectiles.add(new Projectile(x + 25, y + 40, speed)); // 첫 번째 총알
+            projectiles.add(new Projectile(x + 25, y + 45, speed + 5)); // 두 번째 총알 (약간 더 빠르게)
+            projectiles.add(new Projectile(x + 25, y + 50, speed - 5)); // 세 번째 총알 (약간 더 느리게)
+            projectiles.add(new Projectile(x + 25, y + 48, speed + 10)); // 세 번째 총알 (약간 더 느리게)
 
-            // 샷건 쿨타임을 2초로 설정
+            // 샷건 쿨타임을 1.3초로 설정
             shotgunCooldown = true;
-            Timer shotgunCooldownTimer = new Timer(2000, e -> shotgunCooldown = false); // 2000ms 후에 쿨타임 해제
+            Timer shotgunCooldownTimer = new Timer(1300, e -> shotgunCooldown = false); // 2000ms 후에 쿨타임 해제
             shotgunCooldownTimer.setRepeats(false);
             shotgunCooldownTimer.start();
         } else {
@@ -385,7 +387,8 @@ class Screen extends JPanel implements KeyListener {
         // 점수 표시
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 30));
-        g.drawString("Score: " + score, getWidth() - 450, 40);
+        if (stage==2) round+=10;
+        g.drawString("Score: " + score +"/"+ round , getWidth() - 450, 40);
 
         // 캐릭터 체력바
         g.setColor(Color.RED);
@@ -465,7 +468,7 @@ class Screen extends JPanel implements KeyListener {
             	startActionWithDelay(key, this::fireProjectile, 200); // 투사체 발사 후 100ms 딜레이
             	coolTime(200);
         	}
-        	else if(character.getSelectCharacter() == 2) {//샷건 캐릭터 3발 씩 쏨
+        	else if(character.getSelectCharacter() == 2) {//샷건 캐릭터 4발 씩 쏨
         		startActionWithDelay(key, this::fireProjectile, 200);
             	coolTime(200);
         	}

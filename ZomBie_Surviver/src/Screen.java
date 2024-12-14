@@ -11,8 +11,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -43,7 +45,7 @@ class Screen extends JPanel implements KeyListener {
     private final Color characterColor; // 캐릭터의 색상
     private final Map<Integer, Boolean> keyStates = new HashMap<>(); // 키 상태를 추적
     private final Map<Integer, Timer> actionTimers = new HashMap<>(); // 키에 대응하는 타이머
-    private final ArrayList<Enemy> enemies = new ArrayList<>(); // 적 목록
+    private final List<Enemy> enemies = Collections.synchronizedList(new ArrayList<>()); // 적 목록
     private final ArrayList<Projectile> projectiles = new ArrayList<>(); // 투사체 목록
     private final Random random = new Random(); // 랜덤 생성기
     private int lastDirection = 1; // 마지막으로 움직인 방향 (1: 오른쪽, -1: 왼쪽)
@@ -58,6 +60,7 @@ class Screen extends JPanel implements KeyListener {
     private Clip bgmClip;
     private int score = 0; //점수
     private int stage = 1; // 현재 스테이지
+    private boolean isDialogShowing = false;
     
     // 생성자: 화면 초기화 및 타이머 설정
     public Screen(JFrame parentFrame, Color characterColor, int stage) {
@@ -180,17 +183,20 @@ class Screen extends JPanel implements KeyListener {
     //스테이지 클리어 조건
     private void checkStageClear() {
         if ((stage == 1 && score >= round) || (stage == 2 && score >= round)) {
-            showStageClearMessage();
+            if (!isDialogShowing) {  // 다이얼로그가 보이지 않을 때만 표시
+                isDialogShowing = true;
+                showStageClearMessage();
+            }
         }
     }
     
     public void cleanup() {
-        // 실행 중인 타이머 정지
+        synchronized(enemies) {
+            enemies.clear();
+        }
         if (movementTimer != null) movementTimer.stop();
         if (enemySpawnTimer != null) enemySpawnTimer.stop();
         if (invincibilityTimer != null) invincibilityTimer.stop();
-
-        // 배경음악 정지
         stopBackgroundMusic();
 
         // 기타 리소스 정리 (필요에 따라 추가)
@@ -220,16 +226,14 @@ class Screen extends JPanel implements KeyListener {
         button1.addActionListener(e -> {
             dialog.dispose();
             if (stage == 1) {
-                // 현재 Screen의 배경음악을 정리하고, 새 스테이지로 이동
-                stopBackgroundMusic(); // 현재 배경음악 중지
+                cleanup(); // 현재 스테이지의 리소스 정리
                 parentFrame.getContentPane().removeAll();
-                Screen nextStage = new Screen(parentFrame, characterColor, 2); // 스테이지 2로 이동
+                Screen nextStage = new Screen(parentFrame, characterColor, 2);
                 parentFrame.add(nextStage);
                 parentFrame.revalidate();
                 parentFrame.repaint();
-                SwingUtilities.invokeLater(nextStage::requestFocusInWindow); // 포커스 설정
+                SwingUtilities.invokeLater(nextStage::requestFocusInWindow);
             } else {
-                // 모든 스테이지 클리어 후 종료
                 System.exit(0);
             }
         });
@@ -256,28 +260,31 @@ class Screen extends JPanel implements KeyListener {
 
     // 적 이동 처리
     private void moveEnemies() {
-        Iterator<Enemy> iterator = enemies.iterator();
-        while (iterator.hasNext()) {
-            Enemy enemy = iterator.next();
-            if (enemy.x < x-50) { 
-            	enemy.x += 1; // 캐릭터 방향으로 이동
-            	enemy.facingLeft = false; // 캐릭터 방향에 따라 좀비 좌우 변경
-            }
-            else if (enemy.x > x-10) {
-            	enemy.x -= 1;
-            	enemy.facingLeft = true;
+        synchronized(enemies) {
+            ArrayList<Enemy> enemiesToRemove = new ArrayList<>();
+            
+            for (Enemy enemy : new ArrayList<>(enemies)) {  // 복사본으로 순회
+                if (enemy.x < x-50) { 
+                    enemy.x += 1;
+                    enemy.facingLeft = false;
+                }
+                else if (enemy.x > x-10) {
+                    enemy.x -= 1;
+                    enemy.facingLeft = true;
+                }
+                
+                if (countNumber % 20 == 0) {
+                    enemy.updateAnimation();
+                }
+                
+                if (enemy.health <= 0) {
+                    enemiesToRemove.add(enemy);
+                    score++;
+                    checkStageClear();
+                }
             }
             
-            // 애니메이션 업데이트
-            if (countNumber % 20 == 0) {
-                enemy.updateAnimation();
-            }
-            
-            if (enemy.health <= 0) {
-            	iterator.remove(); // 체력이 0 이하인 적 제거
-                score++; // 적을 죽일 때마다 점수 증가
-                checkStageClear(); // 스테이지 클리어 조건 확인
-            }
+            enemies.removeAll(enemiesToRemove);
         }
     }
 
@@ -333,27 +340,35 @@ class Screen extends JPanel implements KeyListener {
     
     // 근접 공격 처리
     private void performMeleeAttack() {
-    	if (meleeAttackCooldown) return; // 쿨타임 중이면 무시
-        meleeAttackCooldown = true; // 쿨타임 활성화
+        if (meleeAttackCooldown) return;
+        meleeAttackCooldown = true;
         
-        int attackX = (lastDirection == 1) ?  x + 30 : x - 40; // 공격 방향에 따른 x 좌표
-        int attackWidth = 50; // 공격 범위
+        int attackX = (lastDirection == 1) ? x + 30 : x - 40;
+        int attackWidth = 50;
         Rectangle attackArea = new Rectangle(attackX, y+30, attackWidth, 50);
 
-        Iterator<Enemy> iterator = enemies.iterator();
-        while (iterator.hasNext()) {
-            Enemy enemy = iterator.next();
-            Rectangle enemyRect = new Rectangle(enemy.x + 30, enemy.y, enemy.size, enemy.size + 60);
-            if (attackArea.intersects(enemyRect)) {
-                enemy.health--; // 적 체력 감소
+        synchronized(enemies) {
+            ArrayList<Enemy> enemiesToRemove = new ArrayList<>();
+            
+            for (Enemy enemy : new ArrayList<>(enemies)) {
+                Rectangle enemyRect = new Rectangle(enemy.x + 30, enemy.y, enemy.size, enemy.size + 60);
+                if (attackArea.intersects(enemyRect)) {
+                    enemy.health--;
+                    if (enemy.health <= 0) {
+                        enemiesToRemove.add(enemy);
+                        score++;
+                        if ((stage == 1 && score >= round) || (stage == 2 && score >= round)) {
+                            movementTimer.stop();  // 화면 멈추기
+                            enemySpawnTimer.stop(); // 적 생성 멈추기
+                        }
+                        checkStageClear();
+                    }
+                }
             }
-            if (enemy.health<= 0) {
-            	iterator.remove(); // 체력이 0 이하인 적 제거
-                score++; // 적을 죽일 때마다 점수 증가
-                checkStageClear(); // 스테이지 클리어 조건 확인
-            }
+            
+            enemies.removeAll(enemiesToRemove);
         }
-        // 일정 시간 후 쿨타임 해제
+        
         coolTime(200);
     }
 
@@ -449,7 +464,7 @@ class Screen extends JPanel implements KeyListener {
         // 근접 공격 범위 그리기
         if (lastDirection == 1) { // 오른쪽 공격
             g.setColor(Color.CYAN);
-            g.drawRect(x + 30, y+30, 50, 50); // 근접 공격 범위 (오른쪽)
+            g.drawRect(x + 30, y+30, 50, 50); // 근접 공격 ��위 (오른쪽)
         } else if (lastDirection == -1) { // 왼쪽 공격
             g.setColor(Color.CYAN);
             g.drawRect(x - 40, y+30, 50, 50); // 근접 공격 범위 (왼쪽)
@@ -527,7 +542,7 @@ class Screen extends JPanel implements KeyListener {
 
     // 딜레이를 두고 동작을 반복 실행
     private void startActionWithDelay(int keyCode, Runnable action, int delay) {
-        if (keyStates.getOrDefault(keyCode, false)) return; // 이미 동작 중이면 무시
+        if (keyStates.getOrDefault(keyCode, false)) return; // 이미 동작 중���면 무시
         keyStates.put(keyCode, true);
 
         // 한 번 실행

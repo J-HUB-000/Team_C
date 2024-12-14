@@ -15,7 +15,7 @@ import javax.imageio.ImageIO;
 
 class Enemy {
     int x = 310, y = 350;
-    int size, health = 2;
+    int size, health = 1;
     private BufferedImage sprite;
     private State[] states;
     private int stateIndex = 0;

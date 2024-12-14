@@ -384,9 +384,6 @@ public class Character {
                 lastSoundTime = currentTime; // 소리 재생 시간 기록
             }
             break;
-    	case KeyEvent.VK_D:
-    		stateIndex = 5; // 죽음
-    		break;
     	case KeyEvent.VK_LEFT:
     		movingLeft = true;
     		flip = true;
@@ -422,8 +419,6 @@ public class Character {
             case KeyEvent.VK_S:
                 stateIndex = 0;
                 break;
-            case KeyEvent.VK_D:
-                break;
         }
     }
     private void playSound(File file) {
@@ -438,4 +433,3 @@ public class Character {
 	}
 
 }
-

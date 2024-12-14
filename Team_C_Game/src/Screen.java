@@ -172,7 +172,7 @@ class Screen extends JPanel implements KeyListener {
     private int round = 10;
     //스테이지 클리어 조건
     private void checkStageClear() {
-        if ((stage == 1 && score >= round) || (stage == 2 && score >= round + 5)) {
+        if ((stage == 1 && score >= round) || (stage == 2 && score >= round)) {
             showStageClearMessage();
         }
     }
@@ -315,16 +315,29 @@ class Screen extends JPanel implements KeyListener {
             }
         }
     }
-
+    
     // 근접 공격 처리
     private void performMeleeAttack() {
-        if (meleeAttackCooldown) return; // 쿨타임 중이면 무시
+    	if (meleeAttackCooldown) return; // 쿨타임 중이면 무시
         meleeAttackCooldown = true; // 쿨타임 활성화
-        int attackX = (lastDirection == 1) ? x - 40 : x + 40 ; // 공격 방향에 따른 x 좌표
+        
+        int attackX = (lastDirection == 1) ?  x + 30 : x - 40; // 공격 방향에 따른 x 좌표
+        int attackWidth = 50; // 공격 범위
+        Rectangle attackArea = new Rectangle(attackX, y+30, attackWidth, 50);
 
-        // 근접 공격 범위에서 투사체 발사
-        projectiles.add(new Projectile(attackX, y + 50, lastDirection * 50)); // 공격 방향에 맞는 투사체 발사
-
+        Iterator<Enemy> iterator = enemies.iterator();
+        while (iterator.hasNext()) {
+            Enemy enemy = iterator.next();
+            Rectangle enemyRect = new Rectangle(enemy.x + 30, enemy.y, enemy.size, enemy.size + 60);
+            if (attackArea.intersects(enemyRect)) {
+                enemy.health--; // 적 체력 감소
+            }
+            if (enemy.health<= 0) {
+            	iterator.remove(); // 체력이 0 이하인 적 제거
+                score++; // 적을 죽일 때마다 점수 증가
+                checkStageClear(); // 스테이지 클리어 조건 확인
+            }
+        }
         // 일정 시간 후 쿨타임 해제
         coolTime(200);
     }
@@ -387,7 +400,7 @@ class Screen extends JPanel implements KeyListener {
         // 점수 표시
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 30));
-        if (stage==2) round+=10;
+        if (stage==2) round = 15;
         g.drawString("Score: " + score +"/"+ round , getWidth() - 450, 40);
 
         // 캐릭터 체력바

@@ -92,7 +92,7 @@ class Screen extends JPanel implements KeyListener {
             repaint(); // 화면 갱신
         });
         // 적 생성 타이머
-        enemySpawnTimer = new Timer(500000 + random.nextInt(1), e -> spawnEnemy());
+        enemySpawnTimer = new Timer(500 + random.nextInt(100), e -> spawnEnemy());
         // 무적 상태 해제 타이머
         invincibilityTimer = new Timer(1000, e -> invincible = false);
 

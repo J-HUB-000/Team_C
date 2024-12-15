@@ -92,7 +92,7 @@ class Screen extends JPanel implements KeyListener {
             repaint(); // 화면 갱신
         });
         // 적 생성 타이머
-        enemySpawnTimer = new Timer(500 + random.nextInt(100), e -> spawnEnemy());
+        enemySpawnTimer = new Timer(500000 + random.nextInt(1), e -> spawnEnemy());
         // 무적 상태 해제 타이머
         invincibilityTimer = new Timer(1000, e -> invincible = false);
 
@@ -100,7 +100,7 @@ class Screen extends JPanel implements KeyListener {
         enemySpawnTimer.start();
     }
     
- // 이미지 로드
+    // 이미지 로드
     private void loadBackgroundImage() {
         try {
             String bgFile;
@@ -128,7 +128,7 @@ class Screen extends JPanel implements KeyListener {
         }
     }
     
- // 음악 파일 로드
+    // 음악 파일 로드
     private void playBackgroundMusic() {
         try {
             if (bgmClip != null && bgmClip.isRunning()) {
@@ -303,7 +303,8 @@ class Screen extends JPanel implements KeyListener {
     private void checkCollisions() {
         if (!invincible) { // 무적 상태가 아닐 때만 충돌 검사
             for (Enemy enemy : enemies) {
-                if (new Rectangle(x+10, y, 20, 50).intersects(new Rectangle(enemy.x+30, enemy.y, enemy.size,enemy.size))) {
+                if (new Rectangle(x+10, y, 20, 50).intersects(new Rectangle(
+                		enemy.x+30, enemy.y, enemy.size,enemy.size))) {
                     health -= 10; // 충돌 시 체력 감소
                     invincible = true; // 무적 상태 활성화
                     invincibilityTimer.start(); // 무적 상태 타이머 시작
@@ -333,7 +334,8 @@ class Screen extends JPanel implements KeyListener {
             ArrayList<Enemy> enemiesToRemove = new ArrayList<>();
             
             for (Enemy enemy : new ArrayList<>(enemies)) {
-                Rectangle enemyRect = new Rectangle(enemy.x + 30, enemy.y, enemy.size, enemy.size + 60);
+                Rectangle enemyRect = new Rectangle(enemy.x + 30,
+                		enemy.y, enemy.size, enemy.size + 60);
                 if (attackArea.intersects(enemyRect)) {
                     enemy.health--;
                     if (enemy.health <= 0) {
@@ -412,8 +414,8 @@ class Screen extends JPanel implements KeyListener {
         // 점수 표시
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 30));
-        if (stage==2) round = 15;
-        g.drawString("Score: " + score +"/"+ round , getWidth() - 450, 40);
+        if (stage==2) round=15;
+        g.drawString("Score: " + score + "/" + round, getWidth() - 450, 40);
 
         // 캐릭터 체력바
         g.setColor(Color.RED);
